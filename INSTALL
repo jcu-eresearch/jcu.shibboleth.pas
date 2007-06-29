@@ -1,0 +1,65 @@
+Shibboleth PAS Plugin - Installiation
+========================================
+
+0. Install Apache (apache config follows). Currently, zope/plone needs to be proxied behind apache for shibboleth to work.
+
+1. Install shibboleth-sp (e.g. see http://www.federation.org.au/twiki/bin/view/Federation/ManualInstallSP)
+
+2. Install Zope and Plone and Pluggable Auth Service (If it is not already), and PlonePas.
+
+3. Place this in Products/Shibboleth ??
+
+4. Start Zope.
+
+5. Add A Plone Site. We will refference it as ${site}.
+
+6. In the Zope Management Interface (eg. http://localhost:8080/manage) drop down the ${site} and click on acl_users.
+
+7. Add a "Shibboleth Authenticator" from the drop down list. 
+7.1 Enter an ID and title.
+7.1 We will reffer to the id you gave it as ${id}.
+
+8. Go back to acl_users and click on the Shibbolith Authenticator you just created. Chack all the check boxes.
+
+9. Click on the Properties Tab.
+9.1 Set the User_UID_Attribute property of the Shibboleth Attribute that contains the uid.
+9.2 Set the User_Common_Name_Attribute property of the Shibboleth Attribute that contains the users common name.
+N.B. These can be retrieved from the 'Header' attribute of an AttributeRule element in Shibboleth's file ${Shib_Install_Dir}/etc/shibboleth/AAP.xml, converted to uppercase, '-' replaced with '_' and with a prefix of 'HTTP_'.i e.g.: 
+ The Entry:
+
+        <AttributeRule Name="urn:mace:dir:attribute-def:eduPersonAffiliation" CaseSensitive="false" Header="Shib-EP-UnscopedAffiliation" Alias="unscoped-affiliation">
+           .
+           .
+           .
+        </AttributeRule>
+
+ would become HTTP_SHIB_EP_UNSCOPEDAFFILIATION.
+
+10. Click on the Map Roles/Map Groups Tab and set up the role and group mapping.
+
+
+
+========================================
+Apache Configuration.
+========================================
+
+	<Location /${site}/acl_users/${id}/login*>
+		AuthType shibboleth
+		ShibRequireSession On
+		require valid-user
+	</Location>
+
+	<IfDefine PROXY>
+		ProxyPass /${site} http://127.0.0.1:8080/${site}
+		ProxyPassReverse /${site} http://127.0.0.1:8080/${site}
+		ProxyVia on
+		<IfModule mod_rewrite.c>
+			RewriteEngine On
+			RewriteRule ^/${site}(.*)  http://localhost:8080/VirtualHostBase/http/${FQDN}:80/${site}/$1 [L,P]
+			#RewriteRule ^/${site}(.*)  http://localhost:8080/VirtualHostBase/https/${FQDN}:443/${site}/$1 [L,P]
+		</IfModule>
+	</IfDefine>
+
+========================================
+Squid Configuration.
+========================================

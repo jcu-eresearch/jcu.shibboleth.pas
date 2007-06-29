@@ -1,0 +1,19 @@
+Introduction
+
+ This page lets you set up Group/Role mappings based on Shibboleth Attributes that have been passed to the SP by the IDP.
+
+Add Group/Role:
+
+ This Drop down box lets you add an existing Group/Role to the Group/Role Map.
+
+Group/Role Map:
+
+ After a Group/Role has been added with "Add Group/Role" this section is used to specify how users are mapped to Groups/Roles.
+ Each Group/Role mapping has th following parts:
+
+ - **Title** - This is the name of the Group/Role with a (del) link beside it. This link removes the Group/Role from the map and places it back in the "Add Group/Role" combobox.
+
+ - **Mapping Table** - This is were the work is done. It is a table with the column headers *Bracket*, *Name*, *Operation*, *Value*, *Bracket*, *Operation*, *Delete*.
+
+ - * jjj
+

@@ -1,0 +1,100 @@
+<h1 tal:replace="structure here/manage_page_header">Header</h1>
+<h2 tal:replace="structure here/manage_tabs"> TABS </h2>
+
+<p class="form-help">
+  Choose the functionality this
+  <span tal:replace="here/meta_type"> Foo Plugin </span>
+  will perform.
+</p>
+
+<H3>Add <span tal:replace="template/name"/>:</H3>
+<form method="post" tal:attributes="action string:${here/absolute_url}/${sa_const/action}">
+	<INPUT TYPE="HIDDEN"  tal:attributes="name sa_const/op_type; value sa_const/op_add_item" />
+	<INPUT TYPE="HIDDEN"  tal:attributes="name sa_const/mapping; value template/name" />
+	<SELECT tal:attributes="name sa_const/mapping_item">
+              <span tal:repeat="role python: here.getValidItems(template.name)" tal:omit-tag="">
+                <OPTION value="" tal:attributes="value role" tal:content="role"/></span>
+	</SELECT>
+	<INPUT VALUE="Add" TYPE="SUBMIT"/>
+</form>
+
+<span tal:define="map python: here.getMap(template.name)" tal:omit-tag="">
+<H3><span tal:replace="template/name"/> Map:</H3>
+
+<span tal:repeat="item map" tal:omit-tag="">
+<H4><span tal:replace="item"/> (<A tal:attributes="href python:'%s?%s=%s&%s=%s&%s=%s'%(sa_const['action'], sa_const['op_type'], sa_const['op_del_item'], sa_const['mapping'], template.name, sa_const['mapping_item'], item)">del</A>) </H4>
+<div style="margin:20px;">
+  <span tal:define="results python: here.compileItem(map, item, template.name)" tal:omit-tag="" tal:condition="python:results[0] is not None">
+    <H5>There is an error with the expression:</H5>
+    <pre style="background-color: #EAE7BB; padding:2px; border-style: solid; border-width:2px;" 
+         tal:content="python: results[1]"/>
+    <H5>Stack Trace:</H5>
+    <pre style="background-color: #EAE7BB; padding:2px; border-style: solid; border-width:2px;" 
+         tal:content="python: results[0]"/>
+  </span>
+  <FORM method="post" tal:attributes="name item; action string:${here/absolute_url}/${sa_const/action}">
+	<INPUT TYPE="HIDDEN"  tal:attributes="name sa_const/op_type; value sa_const/op_manage_item" />
+	<INPUT TYPE="HIDDEN"  tal:attributes="name sa_const/mapping; value template/name" />
+	<INPUT TYPE="HIDDEN"  tal:attributes="name sa_const/mapping_item; value item" />
+	<div style="background-color: #6699CC; padding:2px; border-style: solid; border-width:2px;">
+		<TABLE style="text-align: center;">
+			<TR><TD>Bracket</TD><TD>Name</TD><TD>Operation</TD><TD>Value</TD><TD>Bracket</TD><TD>Operation</TD><TD>Delete</TD></TR>
+		<span tal:repeat="row_pos python:range(len(map[item]))" tal:omit-tag="">
+			<TR>
+				<TD>
+					<SELECT tal:attributes="name string:${sa_const/opening_bracket_element}:${row_pos}" >
+					<span tal:repeat="bc python: range(here.getProperty(sa_const['max_brackets'])+1)" tal:omit-tag="">
+						<OPTION tal:attributes="value bc" tal:content="python: '%i %s'%(bc, bc*'(')" 
+							tal:condition="python:bc == map[item][row_pos][sa_const['OBPos']]" SELECTED/>
+						<OPTION tal:attributes="value bc" tal:content="python: '%i %s'%(bc, bc*'(')" 
+							tal:condition="python:bc != map[item][row_pos][sa_const['OBPos']]"/>
+					</span>
+					</SELECT>
+				</TD>
+				<TD><INPUT tal:attributes="name string:${sa_const/var_name_element}:${row_pos}; value python:map[item][row_pos][sa_const['SVNPos']]"></TD>
+				<TD>
+					<SELECT  tal:attributes="name string:${sa_const/op_type_value_element}:${row_pos}">
+					<span tal:repeat="op sa_const/EXPRESSIONS" tal:omit-tag="">
+						<OPTION  tal:attributes="value op" tal:content="python: sa_const['EXPRESSIONS'][op]"
+							 tal:condition="python:op == map[item][row_pos][sa_const['OTPos']]" SELECTED/>
+						<OPTION  tal:attributes="value op" tal:content="python: sa_const['EXPRESSIONS'][op]"
+							 tal:condition="python:op != map[item][row_pos][sa_const['OTPos']]"/>
+					</span>
+					</SELECT>
+				</TD>
+				<TD><INPUT tal:attributes="name string:${sa_const/var_value_element}:${row_pos}; value python:map[item][row_pos][sa_const['SVVPos']]"></TD>
+				<TD>
+					<SELECT tal:attributes="name string:${sa_const/closing_bracket_element}:${row_pos}" >
+					<span tal:repeat="bc python: range(here.getProperty(sa_const['max_brackets'])+1)" tal:omit-tag="">
+						<OPTION tal:attributes="value bc" tal:content="python: '%i %s'%(bc, bc*')') "
+							tal:condition="python:bc == map[item][row_pos][sa_const['CBPos']]" SELECTED/>
+						<OPTION tal:attributes="value bc" tal:content="python: '%i %s'%(bc, bc*')') "
+							tal:condition="python:bc != map[item][row_pos][sa_const['CBPos']]"/>
+					</span>
+					</SELECT>
+				</TD>
+				<TD>
+					<SELECT  tal:attributes="name string:${sa_const/bool_row_op_element}:${row_pos}">
+					<span tal:repeat="op sa_const/BOOL_EXPRESSIONS" tal:omit-tag="">
+						<OPTION  tal:attributes="value op" tal:content="python: sa_const['BOOL_EXPRESSIONS'][op]"
+							 tal:condition="python:op == map[item][row_pos][sa_const['BOTPos']]" SELECTED/>
+						<OPTION  tal:attributes="value op" tal:content="python: sa_const['BOOL_EXPRESSIONS'][op]"
+							 tal:condition="python:op != map[item][row_pos][sa_const['BOTPos']]"/>
+					</span>
+					</SELECT>
+				</TD>
+				<TD><INPUT TYPE="checkbox" tal:attributes="name sa_const/del_row_element; value row_pos"/></TD>
+			</TR>
+		</span>
+		</TABLE>
+		<BR><INPUT TYPE="TEXT" VALUE="1"  tal:attributes="name sa_const/add_row_count_element"/>
+		<INPUT VALUE="Add Row(s)" TYPE="SUBMIT" tal:attributes="name sa_const/add_row_element" />
+	</div>
+	<INPUT VALUE="Save Role Map" TYPE="SUBMIT"  tal:attributes="name sa_const/save_map_element" />
+  	
+  </FORM>
+</div>
+<BR>
+</span>
+</span>
+<h1 tal:replace="structure here/manage_page_footer">Footer</h1>
