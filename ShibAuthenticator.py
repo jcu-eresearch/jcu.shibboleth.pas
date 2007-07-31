@@ -599,33 +599,37 @@ class ShibAuthenticator (BasePlugin):
         lines = []
 	expression = "%s"
 	regex = []
-        for i in range(0, map.__len__()):
-	  item = map[i]
-	  value = None
+	if map.__len__() == 0: 
+            code += "False"
+	else:
+            for i in range(0, map.__len__()):
+	      item = map[i]
+	      value = None
 
-	  #Determin if the value is numerical or a string.
-          #Is this step nessecary? Will there ever be a numerical value here?
-	  try:
-	     float(item[Constants.SVVPos])
-	     value = item[Constants.SVVPos]
-	  except ValueError, e:
-  	        value = str((item[Constants.SVVPos]).decode('unicode-escape', 'ignore')).__repr__()
+	      #Determin if the value is numerical or a string.
+              #Is this step nessecary? Will there ever be a numerical value here?
+	      try:
+	         float(item[Constants.SVVPos])
+	         value = item[Constants.SVVPos]
+	      except ValueError, e:
+  	            value = str((item[Constants.SVVPos]).decode('unicode-escape', 'ignore')).__repr__()
 
-          #Create the expression for a single line.
-	  lines.append( (item[Constants.OBPos]*'(') + 
-              Constants.EXP_CODE[item[Constants.OTPos]]%{'1': (item[Constants.SVNPos].__repr__()), 
-              '2':value} + ""+ (item[Constants.CBPos]*')'))
+              #Create the expression for a single line.
+	      lines.append( (item[Constants.OBPos]*'(') + 
+                  Constants.EXP_CODE[item[Constants.OTPos]]%{'1': (item[Constants.SVNPos].__repr__()), 
+                  '2':value} + ""+ (item[Constants.CBPos]*')'))
 
-          #Create the boolean expressions betweens the lines.
-          if(i < (map.__len__()-1)): expression = Constants.BOOL_CODE[item[Constants.BOTPos]]%(expression, '%s') 
+              #Create the boolean expressions betweens the lines.
+              if(i < (map.__len__()-1)): expression = Constants.BOOL_CODE[item[Constants.BOTPos]]%(expression, '%s') 
 
-	  #Gather the regular expression patterns for validation later.
-	  if item[Constants.OTPos] in Constants.REGEX_EXP: 
-             self.log(DEBUG, "Pattern: "+(str(value)[1:-1]))
-	     regex.append(value)
+	      #Gather the regular expression patterns for validation later.
+	      if item[Constants.OTPos] in Constants.REGEX_EXP: 
+                 self.log(DEBUG, "Pattern: "+(str(value)[1:-1]))
+	         regex.append(value)
 
-        #Merge the lines with the boolean expression.
-        code += expression%tuple(lines)
+            #Merge the lines with the boolean expression.
+            code += expression%tuple(lines)
+
 	code +=": return True\n  return False\n"
 
         #Compile the code. If it contains errors return the stack trace.
