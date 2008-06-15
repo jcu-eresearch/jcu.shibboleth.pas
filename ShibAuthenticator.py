@@ -16,7 +16,7 @@ from Products.PluggableAuthService.interfaces.plugins import \
         IUserEnumerationPlugin 
 from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
 from Products.PluggableAuthService.utils import classImplements
-from Products.PluggableAuthService.utils import Interface
+from zope.interface import Interface
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from Products.PluggableAuthService.permissions import ManageUsers
 from Products.PythonScripts.PythonScript import PythonScript
