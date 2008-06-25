@@ -19,12 +19,12 @@ def initialize(context):
         context.registerClass( SHA
                              , permission=ManageUsers
                              , constructors=(
-                             ShibAuthenticator.manage_addShibAuthenticatorForm, 
+                             ShibAuthenticator.manage_addShibAuthenticatorForm,
                              ShibAuthenticator.addShibAuthenticator, )
                              , icon='www/shib.png'
                              )
-	#registerDirectory('help', globals())
-	context.registerHelp(directory='help', clear=1)
+        #registerDirectory('help', globals())
+        context.registerHelp(directory='help', clear=1)
     except ImportError:
         # If we don't have pyShibTarget installed (and installed
         # correctly) then there is no point in exposing this plugin.

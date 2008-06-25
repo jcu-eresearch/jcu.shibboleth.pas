@@ -4,9 +4,9 @@ import Constants as Constants
 class mypt(PageTemplateFile):
 
     def __init__(self, filename, name, _prefix=None, **kw):
-	PageTemplateFile.__init__(self, filename, _prefix)
-	self.s = self
-	self.name = name	
+        PageTemplateFile.__init__(self, filename, _prefix)
+        self.s = self
+        self.name = name
 
     def pt_getContext(self):
        from Products.PageTemplates.PageTemplateFile import PageTemplateFile

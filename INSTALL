@@ -19,7 +19,7 @@ Shibboleth PAS Plugin - Installiation
 7.1 Enter an ID and title.
 7.1 We will reffer to the id you gave it as ${id}.
 
-8. Go back to acl_users and click on the Shibbolith Authenticator you just created. Chack all the check boxes.
+8. Go back to acl_users and click on the Shibbolith Authenticator you just created. Check all the check boxes.
 
 9. Click on the Properties Tab.
 9.1 Set the User_UID_Attribute property of the Shibboleth Attribute that contains the uid.

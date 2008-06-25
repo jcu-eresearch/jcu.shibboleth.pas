@@ -14,32 +14,32 @@ default_shib_config_dir = '/etc/shibboleth'
 
 #Session Key
 session_id = 'session_id'
-#defaultProperties = {max_brackets:[6, 'int'], 
-#                     user_uid_attribute: ['HTTP_SHIB_PERSON_UID','string'], 
-#		     user_cn_attribute: ['HTTP_SHIB_PERSON_COMMONNAME','string']}
-#defaultProperties = {max_brackets:[6, 'int'], 
-#                      user_uid_attribute: ['HTTP_SHIB_REMOTE_USER','string'], 
+#defaultProperties = {max_brackets:[6, 'int'],
+#                     user_uid_attribute: ['HTTP_SHIB_PERSON_UID','string'],
+#                    user_cn_attribute: ['HTTP_SHIB_PERSON_COMMONNAME','string']}
+#defaultProperties = {max_brackets:[6, 'int'],
+#                      user_uid_attribute: ['HTTP_SHIB_REMOTE_USER','string'],
 #                      user_cn_attribute: ['HTTP_SHIB_PERSON_COMMONNAME','string']}
 
 #Mapping Manager Data
 EXPRESSIONS = {0:'==', 1:'!=', 2:'>', 3:'=>', 4:'<', 5:'<=', 6:'matches', 7:'!matches', 8:'search', 9:'!search', 10:'exists', 11:'!exists'}
-EXP_CODE    = {0:' attributes[%(1)s] == %(2)s ', 
-               1:' attributes[%(1)s] != %(2)s ', 
-               2:' attributes[%(1)s] > %(2)s ', 
-               3:' attributes[%(1)s] => %(2)s ', 
-               4:' attributes[%(1)s] < %(2)s ', 
-               5:' attributes[%(1)s] <= %(2)s ', 
-               6:' (re.compile(%(2)s).match(attributes[%(1)s]) != None) ', 
-	       7:' (re.compile(%(2)s).match(attributes[%(1)s]) == None) ',
-	       8:' (re.compile(%(2)s).search(attributes[%(1)s]) != None) ', 
+EXP_CODE    = {0:' attributes[%(1)s] == %(2)s ',
+               1:' attributes[%(1)s] != %(2)s ',
+               2:' attributes[%(1)s] > %(2)s ',
+               3:' attributes[%(1)s] => %(2)s ',
+               4:' attributes[%(1)s] < %(2)s ',
+               5:' attributes[%(1)s] <= %(2)s ',
+               6:' (re.compile(%(2)s).match(attributes[%(1)s]) != None) ',
+               7:' (re.compile(%(2)s).match(attributes[%(1)s]) == None) ',
+               8:' (re.compile(%(2)s).search(attributes[%(1)s]) != None) ',
                9:' (re.compile(%(2)s).search(attributes[%(1)s]) == None) ',
               10:' attributes.has_key(%(1)s) ',
               11:' (not (attributes.has_key(%(1)s))) '}
 
 #This list contains the ids of all the regular expression operations.
 #These operations need an extra check during code generation to
-#ensure that the regular expression is valid. 
-REGEX_EXP   = [6, 7, 8, 9] 
+#ensure that the regular expression is valid.
+REGEX_EXP   = [6, 7, 8, 9]
 
 BOOL_EXPRESSIONS = {0: 'AND', 1: 'OR', 2:'NAND', 3:'NOR', 4:'XOR'}
 BOOL_CODE = {0: ' %s and \\\n    %s ', 1: ' %s or \\\n    %s ', 2:' (not (%s and \\\n    %s)) ', 3:' (not (%s or \\\n    %s)) ', 4:'%s ^ \\\n    %s'}
