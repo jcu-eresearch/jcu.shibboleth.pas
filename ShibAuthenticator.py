@@ -1,3 +1,4 @@
+from os import path
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from App.class_init import default__class_init__ as InitializeClass
 
@@ -95,6 +96,10 @@ class ShibAuthenticator (BasePlugin):
                    {'label':'Maxium Brackets To Display', 
                     'id': Constants.max_brackets, 
                     'type': 'int', 
+                    'mode':'w'},
+                   {'label':'Shibboleth SP configuration dir',
+                    'id': Constants.shib_config_dir,
+                    'type': 'string',
                     'mode':'w'})
 
     security.declareProtected( ManageUsers, 'roleview')
@@ -126,6 +131,7 @@ class ShibAuthenticator (BasePlugin):
 	self.__dict__[Constants.max_brackets] = Constants.default_max_brackets
 	self.__dict__[Constants.user_cn_attribute] = Constants.default_user_cn_attribute_value
 	self.__dict__[Constants.user_uid_attribute] = Constants.default_user_uid_attribute_value
+	self.__dict__[Constants.shib_config_dir] = Constants.default_shib_config_dir
         self.__dict__[Constants.idp_identifier_attribute] = Constants.default_idp_identifier_attribute_value 
 
     def __setup_compiled_func_map(self):
@@ -680,6 +686,25 @@ class ShibAuthenticator (BasePlugin):
 #    security.declareProtected(ManageUsers, 'do_encode')
 #    def do_encode(self, toEncode):
 #	return string.join([("&#%s;"%ord(x))  for x in list(toEncode)],'')
+
+    security.declareProtected(ManageUsers, 'configfileExists')
+    def configfileExists(self):
+        return path.exists(path.join(self.getProperty(Constants.shib_config_dir), "AAP.xml"))
+
+    security.declareProtected(ManageUsers, 'getPossibleAttributes')
+    def getPossibleAttributes(self, file=None):
+        from xml.dom.ext.reader import Sax2
+        from xml import xpath
+        # Should read the shibboleth.xml to figureout where the AAP is
+        #doc = Sax2.Reader().fromStream(open(self.getProperty(Constants.shib_config_dir)))
+        #AAPConf = xpath.Evaluate('/SPConfig/Applications/AAPProvider/@uri', doc.documentElement)[0]
+        #file = AAPConf._get_value()
+        if not file:
+            file = path.join(self.getProperty(Constants.shib_config_dir), "AAP.xml")
+        doc = Sax2.Reader().fromStream(open(file))
+        nodes = [n for n in xpath.Evaluate('AttributeRule/@Header', doc.documentElement)]
+        return list(set(['HTTP_' + n._get_value().upper().replace('-','_') for n in nodes]))
+
 
 classImplements(ShibAuthenticator,
         IShibAuthenticator,

@@ -51,7 +51,19 @@
 					</span>
 					</SELECT>
 				</TD>
-				<TD><INPUT tal:attributes="name string:${sa_const/var_name_element}:${row_pos}; value python:map[item][row_pos][sa_const['SVNPos']]"></TD>
+				<TD tal:condition="not:here/configfileExists">
+					<INPUT tal:attributes="name string:${sa_const/var_name_element}:${row_pos}; value python:map[item][row_pos][sa_const['SVNPos']]">
+				</TD>
+				<TD tal:condition="here/configfileExists">
+					<SELECT  tal:attributes="name string:${sa_const/var_name_element}:${row_pos}">
+					<SPAN tal:repeat="op here/getPossibleAttributes" tal:omit-tag="">
+						<OPTION  tal:attributes="value op" tal:content="op"
+							 tal:condition="python:op == map[item][row_pos][sa_const['SVNPos']]" selectED/>
+						<OPTION  tal:attributes="value op" tal:content="op"
+							 tal:condition="python:op != map[item][row_pos][sa_const['SVNPos']]"/>
+					</SPAN>
+					</SELECT>
+				</TD>
 				<TD>
 					<SELECT  tal:attributes="name string:${sa_const/op_type_value_element}:${row_pos}">
 					<span tal:repeat="op sa_const/EXPRESSIONS" tal:omit-tag="">
