@@ -1,15 +1,14 @@
 import unittest
-import sys, os
+import os
 import base
 from base import ShibbolethTestCase
 
 class ShibAuthenticator(ShibbolethTestCase):
     def afterSetUp(self):
-        # Set up roles and a user
+        from jcu.shibboleth.pas.plugin import ShibbolethHelper
+        shib = ShibbolethHelper('shib', 'Shibboleth Helper')
+        self.folder.acl_users['shib'] = shib
         self.uf = self.folder.acl_users
-        factory = self.uf.manage_addProduct['Shibboleth']
-        factory.addShibAuthenticator('shib')
-
 
     def testAttributeAuthorityHeaders(self):
         path = os.path.dirname(base.__file__)

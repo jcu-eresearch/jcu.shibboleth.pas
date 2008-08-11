@@ -19,7 +19,7 @@ from logging import  DEBUG, ERROR, INFO, WARNING, CRITICAL, FATAL
 import logging, StringIO, traceback, re, pickle, base64, md5
 
 from persistent.mapping import PersistentMapping
-
+from os import path
 
 LOG = logging.getLogger("jcu.shibboleth.pas")
 

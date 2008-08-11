@@ -10,7 +10,7 @@ class mypt(PageTemplateFile):
 
     def pt_getContext(self):
        from Products.PageTemplates.PageTemplateFile import PageTemplateFile
-       import Products.Shibboleth.Constants as Constants
+       import jcu.shibboleth.pas.Constants as Constants
        c = PageTemplateFile.pt_getContext(self)
        dict = Constants.__dict__.copy()
        del dict['__builtins__']

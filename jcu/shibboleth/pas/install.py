@@ -32,7 +32,7 @@ def register_pas_plugin():
 
 def register_pas_plugin_class(context):
     context.registerClass(plugin.ShibbolethHelper,
-                          permission = ManageUsers,
+                          permission = manage_users,
                           constructors = (manage_add_shibboleth_form,
                                           manage_add_shibboleth_helper,),
                           visibility = None,
