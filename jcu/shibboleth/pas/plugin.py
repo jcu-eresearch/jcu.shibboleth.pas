@@ -1,29 +1,16 @@
-from os import path
+'''Class: PasHelper
+'''
+
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from App.class_init import default__class_init__ as InitializeClass
 
-
-from Products.PluggableAuthService.interfaces.plugins import \
-        ILoginPasswordExtractionPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IChallengePlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IAuthenticationPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IRolesPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IGroupsPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IUserEnumerationPlugin
 from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
 from Products.PluggableAuthService.utils import classImplements
-from zope.interface import Interface
-from Products.PageTemplates.PageTemplateFile import PageTemplateFile
+
+import interface
+import plugins
+
 from Products.PluggableAuthService.permissions import ManageUsers
-from Products.PythonScripts.PythonScript import PythonScript
-
-
-#import pyShibTarget
 
 from ConstantsPageTemplateFile import mypt
 import Constants as Constants
@@ -33,35 +20,18 @@ import logging, StringIO, traceback, re, pickle, base64, md5
 
 from persistent.mapping import PersistentMapping
 
-class IShibAuthenticator ( Interface ):
-    """A Shibboleth Authenticator
-    """
 
-manage_addShibAuthenticatorForm = PageTemplateFile(
-    'www/shibAdd', globals(), __name__='manage_addShibAuthenticatorForm' )
+LOG = logging.getLogger("jcu.shibboleth.pas")
 
-def addShibAuthenticator( dispatcher, id, title=None, total_shib="False", REQUEST=None ):
+class ShibbolethHelper(BasePlugin):
+    '''Multi-plugin Shibboleth
 
-    """ Add a Shibboleth Authenticator as a Pluggable Auth Service.
-    """
-    sp = ShibAuthenticator( id, title , bool(total_shib))
-    dispatcher._setObject( sp.getId(), sp )
+    '''
 
-    if REQUEST is not None:
-        REQUEST.RESPONSE.redirect( '%s/manage_workspace'
-                                      '?manage_tabs_message='
-                                      'ShibAuthenticator+added.'
-                                    % dispatcher.absolute_url() )
+    meta_type = 'Shibboleth Helper'
 
-
-LOG = logging.getLogger("Shibboleth.ShibAuthenticator")
-
-class ShibAuthenticator (BasePlugin):
-    """A Shibboleth Authenticator
-    """
     security = ClassSecurityInfo()
 
-    meta_type = "Shibboleth Authentication"
     manage_options = ( BasePlugin.manage_options +
                        ( { 'label': 'Map Roles',
                            'action': 'roleview',
@@ -706,23 +676,7 @@ class ShibAuthenticator (BasePlugin):
         return list(set(['HTTP_' + n._get_value().upper().replace('-','_') for n in nodes]))
 
 
-classImplements(ShibAuthenticator,
-        IShibAuthenticator,
-        IAuthenticationPlugin,
-        IRolesPlugin,
-        IGroupsPlugin,
-#       IUserFactoryPlugin,
-        IUserEnumerationPlugin,
-        IChallengePlugin,
-        ILoginPasswordExtractionPlugin
-        )
 
-#IUserFactoryPlugin
-#IChallengePlugin
-#ILoginPasswordExtractionPlugin
-#IAuthenticationPlugin
-#IChallengeProtocolChooser
-#IRequestTypeSniffer
+classImplements(ShibbolethHelper, interface.IShibbolethHelper)
 
-
-InitializeClass(ShibAuthenticator)
+InitializeClass( ShibbolethHelper )

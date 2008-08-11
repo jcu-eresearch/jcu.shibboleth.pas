@@ -1,13 +1,13 @@
 <h1 tal:replace="structure here/manage_page_header">Header</h1>
 
-<h2 tal:define="form_title string:Add Shibboleth Authenticator"
+<h2 tal:define="form_title string:Add Shibboleth Helper"
     tal:replace="structure here/manage_form_title">Form Title</h2>
 
 <p class="form-help">
 This Plugin allows users to log in using the Shibboleth Credentials. 
 </p>
 
-<form action="addShibAuthenticator" method="post" 
+<form action="manage_add_shibboleth_helper" method="post"
  enctype="multipart/form-data">
 <table cellspacing="0" cellpadding="2" border="0">
   <tr>
@@ -32,24 +32,11 @@ This Plugin allows users to log in using the Shibboleth Credentials.
   </tr>
   <tr>
     <td align="left" valign="top">
-    <div class="form-optional">
-     Total Shibboleth (The entire site is behind Shibboleth opposed to only the authentication mechinism)
-    </div>
-    </td>
-    <td align="left" valign="top">
-    <select name="total_shib" >
-        <option value="False">False</option>
-        <option value="True">True</option>
-    </select>
-    </td>
-  </tr>  
-  <tr>
-    <td align="left" valign="top">
     </td>
     <td align="left" valign="top">
     <div class="form-element">
-    <input class="form-element" type="submit" name="submit" 
-     value=" Add " /> 
+    <input class="form-element" type="submit" name="submit"
+     value=" Add " />
     </div>
     </td>
   </tr>
