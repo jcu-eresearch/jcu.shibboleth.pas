@@ -10,11 +10,11 @@ test setup
 Plugin setup
 ------------
 
-    >>> acl_users_url = "%s/acl_users" % self.folder.absolute_url()
+    >>> acl_users_url = "%s/acl_users" % self.portal.absolute_url()
     >>> browser.addHeader('Authorization', 'Basic %s:%s' % ('portal_owner', user_password))
     >>> browser.open("%s/manage_main" % acl_users_url)
     >>> browser.url
-    'http://nohost/acl_users/manage_main'
+    'http://nohost/plone/acl_users/manage_main'
     >>> form = browser.getForm(index=0)
     >>> select = form.getControl(name=':action')
 
