@@ -38,5 +38,4 @@ def register_pas_plugin_class(context):
                           visibility = None,
                           icon = 'www/shib.png'
                          )
-    #registerDirectory('help', globals())
     context.registerHelp(directory='help', clear=1)

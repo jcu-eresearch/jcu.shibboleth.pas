@@ -1,0 +1,112 @@
+<h1 tal:replace="structure here/manage_page_header">Header</h1>
+<h2 tal:replace="structure here/manage_tabs"> TABS </h2>
+
+<p class="form-help">
+  Choose the functionality this
+  <span tal:replace="here/meta_type"> Foo Plugin </span>
+  will perform.
+</p>
+
+<H3>Add <span tal:replace="view/name"/>:</H3>
+<form method="post" tal:attributes="action string:${here/absolute_url}/${view/sa_const/action}">
+	<INPUT TYPE="HIDDEN"  tal:attributes="name view/sa_const/op_type; value view/sa_const/op_add_item" />
+	<INPUT TYPE="HIDDEN"  tal:attributes="name view/sa_const/mapping; value view/name" />
+	<SELECT tal:attributes="name view/sa_const/mapping_item">
+              <span tal:repeat="role view/getValidItems" tal:omit-tag="">
+                <OPTION value="" tal:attributes="value role" tal:content="role"/></span>
+	</SELECT>
+	<INPUT VALUE="Add" TYPE="SUBMIT"/>
+</form>
+
+<span tal:define="map view/getMap" tal:omit-tag="">
+<H3><span tal:replace="view/name"/> Map:</H3>
+
+<span tal:repeat="item map" tal:omit-tag="">
+  <H4><span tal:replace="item"/> (<A tal:attributes="href string:${view/sa_const/action}?${view/sa_const/op_type}=${view/sa_const/op_del_item}&${view/sa_const/mapping}=${view/name}&${view/sa_const/mapping_item}=$item">del</A>) </H4>
+<div style="margin:20px;">
+  <span tal:define="results python: view.compileItem(map, item, view.name())" tal:omit-tag="" tal:condition="python:results[0] is not None">
+    <H5>There is an error with the expression:</H5>
+    <pre style="background-color: #EAE7BB; padding:2px; border-style: solid; border-width:2px;" 
+         tal:content="python: results[1]"/>
+    <H5>Stack Trace:</H5>
+    <pre style="background-color: #EAE7BB; padding:2px; border-style: solid; border-width:2px;" 
+         tal:content="python: results[0]"/>
+  </span>
+  <FORM method="post" tal:attributes="name item; action string:${here/absolute_url}/${view/sa_const/action}">
+	<INPUT TYPE="HIDDEN"  tal:attributes="name view/sa_const/op_type; value view/sa_const/op_manage_item" />
+	<INPUT TYPE="HIDDEN"  tal:attributes="name view/sa_const/mapping; value view/name" />
+	<INPUT TYPE="HIDDEN"  tal:attributes="name view/sa_const/mapping_item; value item" />
+	<div style="background-color: #6699CC; padding:2px; border-style: solid; border-width:2px;">
+		<TABLE style="text-align: center;">
+			<TR><TD>Bracket</TD><TD>Name</TD><TD>Operation</TD><TD>Value</TD><TD>Bracket</TD><TD>Operation</TD><TD>Delete</TD></TR>
+		<span tal:repeat="row_pos python:range(len(map[item]))" tal:omit-tag="">
+			<TR>
+				<TD>
+					<SELECT tal:attributes="name string:${view/sa_const/opening_bracket_element}:${row_pos}" >
+            <span tal:repeat="bc python: view.getMaxBrackets()" tal:omit-tag="">
+						<OPTION tal:attributes="value bc" tal:content="python: '%i %s'%(bc, bc*'(')" 
+              tal:condition="python:bc == map[item][row_pos][view.OBPos]" SELECTED/>
+						<OPTION tal:attributes="value bc" tal:content="python: '%i %s'%(bc, bc*'(')" 
+							tal:condition="python:bc != map[item][row_pos][view.OBPos]"/>
+					</span>
+					</SELECT>
+				</TD>
+				<TD tal:condition="not:view/configfileExists">
+					<INPUT tal:attributes="name string:${view/sa_const/var_name_element}:${row_pos}; value python:map[item][row_pos][view.SVNPos]">
+				</TD>
+				<TD tal:condition="view/configfileExists">
+					<SELECT  tal:attributes="name string:${view/sa_const/var_name_element}:${row_pos}">
+					<SPAN tal:repeat="op view/getPossibleAttributes" tal:omit-tag="">
+						<OPTION  tal:attributes="value op" tal:content="op"
+							 tal:condition="python:op == map[item][row_pos][view.SVNPos]" selectED/>
+						<OPTION  tal:attributes="value op" tal:content="op"
+							 tal:condition="python:op != map[item][row_pos][view.SVNPos]"/>
+					</SPAN>
+					</SELECT>
+				</TD>
+				<TD>
+					<SELECT  tal:attributes="name string:${view/sa_const/op_type_value_element}:${row_pos}">
+					<span tal:repeat="op view/sa_const/EXPRESSIONS" tal:omit-tag="">
+            <OPTION  tal:attributes="value op" tal:content="python: view.EXPRESSIONS[op]"
+							 tal:condition="python:op == map[item][row_pos][view.OTPos]" SELECTED/>
+						<OPTION  tal:attributes="value op" tal:content="python: view.EXPRESSIONS[op]"
+							 tal:condition="python:op != map[item][row_pos][view.OTPos]"/>
+					</span>
+					</SELECT>
+				</TD>
+				<TD><INPUT tal:attributes="name string:${view/sa_const/var_value_element}:${row_pos}; value python:map[item][row_pos][view.SVVPos]"></TD>
+				<TD>
+					<SELECT tal:attributes="name string:${view/sa_const/closing_bracket_element}:${row_pos}" >
+            <span tal:repeat="bc view/getMaxBrackets" tal:omit-tag="">
+						<OPTION tal:attributes="value bc" tal:content="python: '%i %s'%(bc, bc*')') "
+							tal:condition="python:bc == map[item][row_pos][view.CBPos]" SELECTED/>
+						<OPTION tal:attributes="value bc" tal:content="python: '%i %s'%(bc, bc*')') "
+							tal:condition="python:bc != map[item][row_pos][view.CBPos]"/>
+					</span>
+					</SELECT>
+				</TD>
+				<TD>
+					<SELECT  tal:attributes="name string:${view/sa_const/bool_row_op_element}:${row_pos}">
+					<span tal:repeat="op view/BOOL_EXPRESSIONS" tal:omit-tag="">
+						<OPTION  tal:attributes="value op" tal:content="python: view.BOOL_EXPRESSIONS[op]"
+							 tal:condition="python:op == map[item][row_pos][view.BOTPos]" SELECTED/>
+						<OPTION  tal:attributes="value op" tal:content="python: view.BOOL_EXPRESSIONS[op]"
+							 tal:condition="python:op != map[item][row_pos][view.BOTPos]"/>
+					</span>
+					</SELECT>
+				</TD>
+				<TD><INPUT TYPE="checkbox" tal:attributes="name view/sa_const/del_row_element; value row_pos"/></TD>
+			</TR>
+		</span>
+		</TABLE>
+		<BR><INPUT TYPE="TEXT" VALUE="1"  tal:attributes="name view/sa_const/add_row_count_element"/>
+		<INPUT VALUE="Add Row(s)" TYPE="SUBMIT" tal:attributes="name view/sa_const/add_row_element" />
+	</div>
+	<INPUT VALUE="Save Role Map" TYPE="SUBMIT"  tal:attributes="name view/sa_const/save_map_element" />
+  	
+  </FORM>
+</div>
+<BR>
+</span>
+</span>
+<h1 tal:replace="structure here/manage_page_footer">Footer</h1>

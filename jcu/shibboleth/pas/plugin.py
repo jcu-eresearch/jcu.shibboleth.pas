@@ -34,18 +34,18 @@ class ShibbolethHelper(BasePlugin):
 
     manage_options = ( BasePlugin.manage_options +
                        ( { 'label': 'Map Roles',
-                           'action': 'roleview',
-                           'help':('Shibboleth','manage_mapping.stx')}
+                           'action': 'manage_roles',
+                           'help':('jcu.shibboleth.pas','manage_mapping.stx')}
                          ,
                        ) +
                        ( { 'label': 'Map Groups',
-                           'action': 'groupview',
-                           'help':('Shibboleth','manage_mapping.stx')}
+                           'action': 'manage_groups',
+                           'help':('jcu.shibboleth.pas','manage_mapping.stx')}
                          ,
                        ) +
                        ( { 'label': 'Import/Export',
-                           'action': 'import_exportview',
-                           'help':('Shibboleth','manage_mapping.stx')}
+                           'action': 'manage_importexport',
+                           'help':('jcu.shibboleth.pas','manage_mapping.stx')}
                          ,
                        )
                      )
@@ -72,28 +72,23 @@ class ShibbolethHelper(BasePlugin):
                     'type': 'string',
                     'mode':'w'})
 
-    security.declareProtected( ManageUsers, 'roleview')
-    roleview = mypt('www/manage_mapping', Constants.RoleM, globals())
-    security.declareProtected( ManageUsers, 'groupview')
-    groupview = mypt('www/manage_mapping', Constants.GroupM, globals())
-    security.declareProtected( ManageUsers, 'import_export')
-    import_exportview = mypt('www/import_export', Constants.ExportImportM, globals())
 
-
-    #conf = pyShibTarget.IConfig()
-    #app = pyShibTarget.IApplication(conf)
-    #lisn = pyShibTarget.IListener(conf)
     _valid_item_func_map = {Constants.RoleM: lambda x: x.valid_roles(), Constants.GroupM: lambda x: x.valid_groups()}
     _op_switch = None
 
     def __init__(self, id, title=None, total_shib=False):
+        super(ShibbolethHelper, self).__init__()
         self._id = self.id = id
         self.title = title
         self.total_shib = total_shib
         self.log(INFO,'Initilizing Shibboleth Authentication.')
         self.__login_location = "login"
         self.role_mapping =  PersistentMapping()
+        self.log(INFO,'Role Mapping. %s' % self.role_mapping)
         self.group_mapping =  PersistentMapping()
+        self.log(INFO,'Group Mapping. %s' % self.group_mapping)
+        self.log(INFO,'Valid Item Mapping. %s' % self._valid_item_func_map)
+        self.log(INFO,'Valid Item Mapping. %s' % self._valid_item_func_map[Constants.RoleM])
         self._mapping_map = {Constants.RoleM: self.role_mapping, Constants.GroupM:self.group_mapping}
         self.__setup_compiled_func_map()
 
@@ -550,6 +545,7 @@ class ShibbolethHelper(BasePlugin):
         results =  self.__compileItem(item, map[item])
         error, code, function = results
         if error is None:
+            self.log(DEBUG, "%s, %s = %s" % (mapping, item, function))
             self._v_compiled_mapping_func_map[mapping][item] = function
         return results
 
@@ -635,16 +631,6 @@ class ShibbolethHelper(BasePlugin):
 
         return (None, code, assign_target)
 
-    security.declareProtected( ManageUsers, 'getMap')
-    def getMap(self, name):
-        return dict(self._mapping_map[name])
-
-    security.declareProtected( ManageUsers, 'getValidItems')
-    def getValidItems(self, name):
-        items =  self._valid_item_func_map[name](self)
-        keys = self.getMap(name).keys()
-        return [x for x in items if x not in keys]
-
     security.declareProtected(ManageUsers, 'valid_groups')
     def valid_groups(self):
         return [group['title'] for group in self.searchGroups()]
@@ -657,15 +643,53 @@ class ShibbolethHelper(BasePlugin):
 #    def do_encode(self, toEncode):
 #       return string.join([("&#%s;"%ord(x))  for x in list(toEncode)],'')
 
-    security.declareProtected(ManageUsers, 'configfileExists')
+    def getValidItems(self, name):
+        """
+        Return either the valid 'Role' or 'Group'
+            >>> self.shib.getValidItems('Role')
+            ['Anonymous', 'Authenticated', 'Manager', 'Owner', 'test_role_1_']
+
+            >>> self.shib.getValidItems('Group')
+            []
+        """
+        items =  self._valid_item_func_map[name](self)
+        keys = self.getMap(name).keys()
+        return [x for x in items if x not in keys]
+
+    def getMap(self, name):
+        """
+        Return the map of the mappings
+            >>> print self.shib._mapping_map
+            {'Group': {}, 'Role': {}}
+        """
+        return dict(self._mapping_map[name])
+
+    #
+    # Shibboleth XML file reader
+    #
     def configfileExists(self):
+        """
+        Return true if the AAP.xml config file exists.
+        This is a prereq for getPossibleAttributes.
+            >>> self.shib.configfileExists()
+            True
+        """
         return path.exists(path.join(self.getProperty(Constants.shib_config_dir), "AAP.xml"))
 
-    security.declareProtected(ManageUsers, 'getPossibleAttributes')
     def getPossibleAttributes(self, file=None):
+        """
+        Return the possible shibboleth attributes which are found in the AAP xml file
+
+            >>> Attributes = [u'HTTP_SHIB_EP_AFFILIATION', u'HTTP_SHIB_EP_UNSCOPEDAFFILIATION', u'HTTP_REMOTE_USER', u'HTTP_SHIB_EP_ENTITLEMENT', u'HTTP_SHIB_TARGETEDID', u'HTTP_SHIB_TARGETEDID', u'HTTP_SHIB_EP_PRIMARYAFFILIATION', u'HTTP_SHIB_EP_PRIMARYORGUNITDN', u'HTTP_SHIB_EP_ORGUNITDN', u'HTTP_SHIB_EP_ORGDN', u'HTTP_SHIB_PERSON_COMMONNAME', u'HTTP_SHIB_PERSON_SURNAME', u'HTTP_SHIB_INETORGPERSON_MAIL', u'HTTP_SHIB_PERSON_TELEPHONENUMBER', u'HTTP_SHIB_ORGPERSON_TITLE', u'HTTP_SHIB_INETORGPERSON_INITIALS', u'HTTP_SHIB_PERSON_DESCRIPTION', u'HTTP_SHIB_INETORGPERSON_CARLICENSE', u'HTTP_SHIB_INETORGPERSON_DEPTNUM', u'HTTP_SHIB_INETORGPERSON_DISPLAYNAME', u'HTTP_SHIB_INETORGPERSON_EMPLOYEENUM', u'HTTP_SHIB_INETORGPERSON_EMPLOYEETYPE', u'HTTP_SHIB_INETORGPERSON_PREFLANG', u'HTTP_SHIB_INETORGPERSON_MANAGER', u'HTTP_SHIB_INETORGPERSON_ROOMNUM', u'HTTP_SHIB_ORGPERSON_SEEALSO', u'HTTP_SHIB_ORGPERSON_FAX', u'HTTP_SHIB_ORGPERSON_STREET', u'HTTP_SHIB_ORGPERSON_POBOX', u'HTTP_SHIB_ORGPERSON_POSTALCODE', u'HTTP_SHIB_ORGPERSON_STATE', u'HTTP_SHIB_INETORGPERSON_GIVENNAME', u'HTTP_SHIB_ORGPERSON_LOCALITY', u'HTTP_SHIB_INETORGPERSON_BUSINESSCAT', u'HTTP_SHIB_ORGPERSON_ORGUNIT', u'HTTP_SHIB_ORGPERSON_OFFICENAME']
+            >>> for a in self.uf.shib.getPossibleAttributes():
+            ...     if a in Attributes:
+            ...         continue
+            ...     else:
+            ...         print "Missing Attributes"
+        """
         from xml.dom.ext.reader import Sax2
         from xml import xpath
-        # Should read the shibboleth.xml to figureout where the AAP is
+        #XXX Should read the shibboleth.xml to figureout where the AAP is
         #doc = Sax2.Reader().fromStream(open(self.getProperty(Constants.shib_config_dir)))
         #AAPConf = xpath.Evaluate('/SPConfig/Applications/AAPProvider/@uri', doc.documentElement)[0]
         #file = AAPConf._get_value()

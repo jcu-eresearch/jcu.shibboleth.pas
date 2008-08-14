@@ -57,13 +57,14 @@ setup(name='jcu.shibboleth.pas',
       include_package_data=True,
       zip_safe=False,
       install_requires=['setuptools',
+                        'zope.schema',
                         # -*- Extra requirements: -*-
                         ],
       tests_require=tests_require,
       extras_require=dict(tests=tests_require),
       test_suite = 'jcu.shibboleth.pas.tests.test_docs.test_suite',
       entry_points="""
-      # -*- entry_points -*- 
+      # -*- entry_points -*-
       [distutils.setup_keywords]
       paster_plugins = setuptools.dist:assert_string_list
 

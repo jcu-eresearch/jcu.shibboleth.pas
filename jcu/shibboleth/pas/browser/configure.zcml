@@ -4,5 +4,33 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     i18n_domain="jcu.shibboleth.pas">
 
+  <!--browser:icon
+    name="zmi_icon"
+    for=".interfaces.IShibbolethHelper"
+    file="shib.png" /-->
+
+  <browser:page
+    for="..interface.IShibbolethHelper"
+    name="manage_importexport"
+    template="importexport.zpt"
+    class=".importexport.importExportView"
+    permission="zope2.ManageUsers"
+    />
+
+  <browser:page
+    for="..interface.IShibbolethHelper"
+    name="manage_roles"
+    template="mappings.zpt"
+    class=".mappings.roleMappingsView"
+    permission="zope2.ManageUsers"
+    />
+
+  <browser:page
+    for="..interface.IShibbolethHelper"
+    name="manage_groups"
+    template="mappings.zpt"
+    class=".mappings.groupMappingsView"
+    permission="zope2.ManageUsers"
+    />
 
 </configure>
