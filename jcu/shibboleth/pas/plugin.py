@@ -697,7 +697,9 @@ class ShibbolethHelper(BasePlugin):
             file = path.join(self.getProperty(Constants.shib_config_dir), "AAP.xml")
         doc = Sax2.Reader().fromStream(open(file))
         nodes = [n for n in xpath.Evaluate('AttributeRule/@Header', doc.documentElement)]
-        return list(set(['HTTP_' + n._get_value().upper().replace('-','_') for n in nodes]))
+        attributes = list(set(['HTTP_' + n._get_value().upper().replace('-','_') for n in nodes])) + [u'HTTP_SHIB_AUTHENTICATION_METHOD', u'HTTP_SHIB_ORIGIN_SITE',  u'HTTP_SHIB_IDENTITY_PROVIDER']
+        attributes.sort()
+        return attributes
 
 
 
