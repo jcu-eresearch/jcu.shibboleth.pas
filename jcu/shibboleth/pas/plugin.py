@@ -4,6 +4,7 @@
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from App.class_init import default__class_init__ as InitializeClass
 
+from Products.PluggableAuthService.interfaces.plugins import IRoleEnumerationPlugin
 from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
 from Products.PluggableAuthService.utils import classImplements
 
@@ -633,11 +634,42 @@ class ShibbolethHelper(BasePlugin):
 
     security.declareProtected(ManageUsers, 'valid_groups')
     def valid_groups(self):
-        return [group['title'] for group in self.searchGroups()]
+        """
+        Return the valid groups
+
+            >>> self.shib.valid_groups()
+            []
+            >>> self.app.acl_users.groups.addGroup('Another Group')
+            >>> self.app.acl_users.groups.addGroup('and Another Group')
+            >>> self.shib.valid_groups()
+            ['Another Group', 'and Another Group']
+        """
+        self.log(DEBUG, "valid_groups: %s" % [group['id'] for group in self.searchGroups()])
+        mapped_groups = self.getMap('Group').keys()
+        return [group['id'] for group in self.searchGroups() if group['id'] not in mapped_groups]
+
 
     security.declareProtected(ManageUsers, 'valid_mappings')
     def valid_mappings(self):
         return self._mapping_map.keys()
+
+
+    def valid_roles(self):
+        """
+        Return the valid roles
+
+            >>> self.shib.valid_roles()
+            ['Owner', 'Manager']
+            >>> self.app.acl_users.roles.addRole('Another Role')
+            >>> self.app.acl_users.shib.valid_roles()
+            ['Owner', 'Manager', 'Another Role']
+        """
+        roles = []
+        for plugin in self.plugins.listPlugins(IRoleEnumerationPlugin):
+            roles += [role['id'] for role in plugin[1].enumerateRoles()]
+        mapped_roles = self.getMap('Role').keys()
+        return [r for r in set(roles) if r not in mapped_roles]
+
 
 #    security.declareProtected(ManageUsers, 'do_encode')
 #    def do_encode(self, toEncode):
