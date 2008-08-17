@@ -1,6 +1,5 @@
 import unittest
 import os
-import base
 
 from zope.testing import doctestunit
 from zope.component import testing
@@ -14,40 +13,49 @@ from zope.publisher.browser import TestRequest
 from zope.component import getMultiAdapter
 
 import jcu.shibboleth.pas
-from base import ShibbolethTestCase
 
-class TestCase(ShibbolethTestCase):
-    class layer(PloneSite):
-        @classmethod
-        def setUp(cls):
-            fiveconfigure.debug_mode = True
-            zcml.load_config('configure.zcml',
-                             jcu.shibboleth.pas)
-            fiveconfigure.debug_mode = False
-        @classmethod
-        def tearDown(cls):
-            pass
+from Testing import ZopeTestCase
+from Products.PloneTestCase import layer
+import Products.PluggableAuthService
+
+class TestCase(ZopeTestCase.ZopeTestCase):
+
+    _setup_fixture = 0
 
     def afterSetUp(self):
+        # Upgrade the UserFolder to a PAS
+        from Products.PluggableAuthService.Extensions.upgrade import replace_acl_users
+        replace_acl_users(self.app)
+        from Products.PluggableAuthService.interfaces.plugins import IGroupsPlugin, IGroupEnumerationPlugin
+        self.uf = self.app.acl_users
+        if not self.uf.hasObject('groups'):
+            factory = self.uf.manage_addProduct['PluggableAuthService']
+            factory.addZODBGroupManager('groups')
+            plugins = self.uf.plugins
+            plugins.activatePlugin(IGroupsPlugin, 'groups')
+            plugins.activatePlugin(IGroupEnumerationPlugin, 'groups')
+
+
+        # Add the session objects
+        ZopeTestCase.utils.setupCoreSessions(self.app)
+
         from jcu.shibboleth.pas.plugin import ShibbolethHelper
         shib = ShibbolethHelper('shib', 'Shibboleth Helper')
-        self.folder.acl_users['shib'] = shib
-        self.uf = self.folder.acl_users
+        self.app.acl_users.acl_users['shib'] = shib
 
         # Setup AAP resolver
-        path = os.path.dirname(base.__file__)
-        self.uf.shib.manage_changeProperties({"Shibboleth_Config_Dir":path})
+        path = os.path.dirname(jcu.shibboleth.pas.__file__)
+        self.uf.shib.manage_changeProperties({"Shibboleth_Config_Dir":path + os.sep +  'tests'})
 
-        self.shib = self.folder.acl_users.shib
-
+        self.shib = self.app.acl_users.shib
+        #from ipdb import set_trace; set_trace()
 
 def test_suite():
     return unittest.TestSuite([
 
-        ztc.FunctionalDocTestSuite(
+        ztc.ZopeDocTestSuite(
             module='jcu.shibboleth.pas.plugin',
             test_class=TestCase),
-
         ])
 
 
