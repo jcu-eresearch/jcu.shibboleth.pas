@@ -1,8 +1,9 @@
+from os import path
+
+from Acquisition import aq_inner
 from zope.interface import implements
 from Products.Five import BrowserView
 from jcu.shibboleth.pas import Constants
-from Acquisition import aq_inner
-from os import path
 
 class roleMappingsView(BrowserView):
     """
@@ -38,10 +39,10 @@ class roleMappingsView(BrowserView):
         """
         Return the valid possible items for this view (either groups or roles)
             >>> self.rmv.getValidItems()
-            ['Anonymous', 'Authenticated', 'Manager', 'Owner', 'test_role_1_']
+            ['Owner', 'Manager', 'test_role_1_']
         """
         context = aq_inner(self.context)
-        return context.getValidItems(self.name())
+        return context.valid_roles()
 
     def getMap(self):
         return self.context.getMap(self.name())
@@ -95,7 +96,7 @@ class groupMappingsView(roleMappingsView):
             []
         """
         context = aq_inner(self.context)
-        return context.getValidItems(self.name())
+        return context.valid_groups()
 
     def getMap(self):
         return self.context.getMap(self.name())

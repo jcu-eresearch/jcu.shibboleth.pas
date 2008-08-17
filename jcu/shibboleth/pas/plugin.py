@@ -74,7 +74,6 @@ class ShibbolethHelper(BasePlugin):
                     'mode':'w'})
 
 
-    _valid_item_func_map = {Constants.RoleM: lambda x: x.valid_roles(), Constants.GroupM: lambda x: x.valid_groups()}
     _op_switch = None
 
     def __init__(self, id, title=None, total_shib=False):
@@ -675,18 +674,6 @@ class ShibbolethHelper(BasePlugin):
 #    def do_encode(self, toEncode):
 #       return string.join([("&#%s;"%ord(x))  for x in list(toEncode)],'')
 
-    def getValidItems(self, name):
-        """
-        Return either the valid 'Role' or 'Group'
-            >>> self.shib.getValidItems('Role')
-            ['Anonymous', 'Authenticated', 'Manager', 'Owner', 'test_role_1_']
-
-            >>> self.shib.getValidItems('Group')
-            []
-        """
-        items =  self._valid_item_func_map[name](self)
-        keys = self.getMap(name).keys()
-        return [x for x in items if x not in keys]
 
     def getMap(self, name):
         """
