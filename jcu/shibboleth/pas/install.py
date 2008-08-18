@@ -5,7 +5,7 @@ from Products.PluggableAuthService import registerMultiPlugin
 import plugin
 
 manage_add_shibboleth_form = PageTemplateFile('browser/add_plugin',
-                            globals(), __name__='manage_add_pas_form' )
+                            globals(), __name__='manage_addShibbolethHelperForm' )
 
 
 def manage_add_shibboleth_helper( dispatcher, id, title=None, REQUEST=None ):

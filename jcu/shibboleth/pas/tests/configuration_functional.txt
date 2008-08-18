@@ -3,18 +3,18 @@ Tests for jcu.shibboleth.pas
 test setup
 ----------
 
-    >>> from Testing.ZopeTestCase import user_password
+    >>> from Testing.ZopeTestCase import user_name, user_password
     >>> from Products.Five.testbrowser import Browser
     >>> browser = Browser()
 
 Plugin setup
 ------------
 
-    >>> acl_users_url = "%s/acl_users" % self.portal.absolute_url()
-    >>> browser.addHeader('Authorization', 'Basic %s:%s' % ('portal_owner', user_password))
+    >>> acl_users_url = "%s/acl_users" % self.app.test_folder_1_.absolute_url()
+    >>> browser.addHeader('Authorization', 'Basic %s:%s' % (user_name, user_password))
     >>> browser.open("%s/manage_main" % acl_users_url)
     >>> browser.url
-    'http://nohost/plone/acl_users/manage_main'
+    'http://nohost/test_folder_1_/acl_users/manage_main'
     >>> form = browser.getForm(index=0)
     >>> select = form.getControl(name=':action')
 
@@ -29,13 +29,13 @@ and we can select it:
     >>> select.displayValue
     ['Shibboleth Helper']
     >>> select.value
-    ['manage_addProduct/jcu.shibboleth.pas/manage_add_shibboleth_helper_form']
+    ['manage_addProduct/jcu.shibboleth.pas/manage_addShibbolethHelperForm']
 
 we add 'Shibboleth Helper' to acl_users:
 
     >>> from jcu.shibboleth.pas.plugin import ShibbolethHelper
     >>> myhelper = ShibbolethHelper('myplugin', 'Shibboleth Helper')
-    >>> self.folder.acl_users['myplugin'] = myhelper
+    >>> self.app.test_folder_1_.acl_users['myplugin'] = myhelper
 
 and so on. Continue your tests here
 
