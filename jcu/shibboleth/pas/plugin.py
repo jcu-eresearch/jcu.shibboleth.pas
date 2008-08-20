@@ -63,7 +63,7 @@ class ShibbolethHelper(BasePlugin):
                     'type': 'string',
                     'mode':'w'},
                    {'label':'Maxium Brackets To Display',
-                    'id': Constants.max_brackets,
+                    'id': 'max_brackets',
                     'type': 'int',
                     'mode':'w'},
                    {'label':'Shibboleth SP configuration dir',
@@ -104,7 +104,7 @@ class ShibbolethHelper(BasePlugin):
         self.__setup_compiled_func_map()
 
         #Properties for the Property Manager.
-        self.__dict__[Constants.max_brackets] = Constants.default_max_brackets
+        self.max_brackets = 6
         self.__dict__[Constants.user_cn_attribute] = Constants.default_user_cn_attribute_value
         self.__dict__[Constants.user_uid_attribute] = Constants.default_user_uid_attribute_value
         self.__dict__[Constants.shib_config_dir] = Constants.default_shib_config_dir

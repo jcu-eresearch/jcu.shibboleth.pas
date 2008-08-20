@@ -68,7 +68,7 @@ class roleMappingsView(BrowserView):
             >>> self.rmv.getMaxBrackets()
             [0, 1, 2, 3, 4, 5, 6]
         """
-        return range(self.context.getProperty(self.sa_const.max_brackets)+1)
+        return range(self.context.getProperty('max_brackets')+1)
 
 
 class groupMappingsView(roleMappingsView):
