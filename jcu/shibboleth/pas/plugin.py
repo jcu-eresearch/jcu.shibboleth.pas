@@ -58,8 +58,8 @@ class ShibbolethHelper(BasePlugin):
                     'id': Constants.user_cn_attribute,
                     'type': 'string',
                     'mode':'w'},
-                   {'label':'User UID Attribute',
-                    'id': Constants.user_uid_attribute,
+                   {'label':'User ID Attribute',
+                    'id': 'userid_attribute',
                     'type': 'string',
                     'mode':'w'},
                    {'label':'Maxium Brackets To Display',
@@ -80,8 +80,8 @@ class ShibbolethHelper(BasePlugin):
             >>> newshib = ShibbolethHelper('newshib')
             >>> newshib.getProperty('max_brackets')
             6
-            >>> newshib.getProperty('User_UID_Attribute')
-            'HTTP_SHIB_REMOTE_USER'
+            >>> newshib.getProperty('userid_attribute')
+            'HTTP_REMOTE_USER'
             >>> newshib.getProperty('User_Common_Name_Attribute')
             'HTTP_SHIB_PERSON_COMMONNAME'
             >>> newshib.getProperty('IDP_Attribute')
@@ -106,7 +106,7 @@ class ShibbolethHelper(BasePlugin):
         #Properties for the Property Manager.
         self.max_brackets = 6
         self.__dict__[Constants.user_cn_attribute] = Constants.default_user_cn_attribute_value
-        self.__dict__[Constants.user_uid_attribute] = Constants.default_user_uid_attribute_value
+        self.userid_attribute = 'HTTP_REMOTE_USER'
         self.__dict__[Constants.shib_config_dir] = Constants.default_shib_config_dir
         self.__dict__[Constants.idp_identifier_attribute] = Constants.default_idp_identifier_attribute_value
 
@@ -297,8 +297,8 @@ class ShibbolethHelper(BasePlugin):
            return None
         #for key in session.keys():
         if isinstance(session[session_id],dict) and session[session_id]['login'] is id:
-            self.log(INFO,str({'id':session[session_id]['login'],'login':session[session_id][self.getProperty(Constants.user_uid_attribute)],'pluginid':self.getId()}))
-            return ({'id':session[session_id]['login'],'login':session[session_id][self.getProperty(Constants.user_uid_attribute)],'pluginid':self.getId()},)
+            self.log(INFO,str({'id':session[session_id]['login'],'login':session[session_id][self.getProperty('userid_attribute')],'pluginid':self.getId()}))
+            return ({'id':session[session_id]['login'],'login':session[session_id][self.getProperty('userid_attribute')],'pluginid':self.getId()},)
         self.log(INFO, "Not Found.")
         return None
 
@@ -335,7 +335,7 @@ class ShibbolethHelper(BasePlugin):
             >>> self.shib.login()
             'https://globus-matthew.hpc.jcu.edu.au/mattotea/acl_users'
 
-            >>> self.app.acl_users.shib.REQUEST.environ.update({'HTTP_SHIB_REMOTE_USER': 'matthew'})
+            >>> self.app.acl_users.shib.REQUEST.environ.update({'HTTP_REMOTE_USER': 'matthew'})
             >>> self.shib.login()
             'https://globus-matthew.hpc.jcu.edu.au/mattotea/acl_users/login_form?form.submitted=1'
 
@@ -364,7 +364,7 @@ class ShibbolethHelper(BasePlugin):
         session[session_id] = self.__extract_shib_data(request)
         if not came_from:
             self.log(INFO, "came_from  not specified, using: %s"%request.BASE2)
-            if not session[session_id].has_key(self.getProperty(Constants.user_uid_attribute)):
+            if not session[session_id].has_key(self.getProperty('userid_attribute')):
                 came_from = request.BASE2
             else:
                 came_from = request.BASE2+"/login_form?form.submitted=1"
@@ -484,7 +484,7 @@ class ShibbolethHelper(BasePlugin):
             if key.startswith("HTTP_"):
                 toRet[key] = request[key];
         #toRet["login"] = request['HTTP_SHIB_PERSON_UID']
-        uid_attr = self.getProperty(Constants.user_uid_attribute)
+        uid_attr = self.getProperty('userid_attribute')
         if uid_attr.strip().__len__() > 0:
              if not (uid_attr in request.keys()):
                   toRet["login"] = self.__getShibbolethSessionId(request)
@@ -493,7 +493,7 @@ class ShibbolethHelper(BasePlugin):
                   self.log(INFO, 'Login: %s, %s'%(uid_attr,request[uid_attr]))
                   toRet["login"] = request[uid_attr]
         else:
-            self.log(ERROR, "%s property is not set to anything."%(Constants.user_uid_attribute,))
+            self.log(ERROR, "%s property is not set to anything."%('userid_attribute',))
         self.log(INFO, "Extracted Values: %s"%str(toRet))
         return toRet
 
