@@ -144,7 +144,7 @@ class ShibbolethHelper(BasePlugin):
                 self.challenge(self.REQUEST, self.REQUEST['RESPONSE'])
             return None
 
-        data = session[credentials['login']]
+        data = session[credentials['shibboleth.session']]
         if not data.has_key(self.getProperty(Constants.user_cn_attribute)):
                principle_name = "Pseudo-Anonymous: %s"%shibSessionId
         else:
@@ -195,20 +195,12 @@ class ShibbolethHelper(BasePlugin):
     def extractCredentials(self, request ):
         """Extract the credentials
         """
-        sesid = self.__getShibbolethSessionId(request)
-        self.log(INFO, "Extracting credentials for handle: %s"%sesid)
-        if not sesid:
-            self.log(INFO, "Not Shib, Ending.")
+        shibsession = self.__getShibbolethSessionId(request)
+        self.log(DEBUG, "extractCredentials: %s" % shibsession)
+        if not shibsession:
+            self.log(DEBUG, "extractCredentials: Not Shib")
             return {}
-        #if not self.__validShibSession(sesid, self.__getIPAddress(request)):
-#       if not self.__validShibSession(request):
-#           self.log(INFO, "Not a valid Handle")
-#           return None
-#       data = None
-        #if self.total_shib:
-        #    data = self.__extract_shib_data(request)
-        return {"login":sesid, "password":sesid}
-        #convert to credentials
+        return {"shibboleth.session": shibsession}
 
 
     #
