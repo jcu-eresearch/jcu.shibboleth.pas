@@ -199,7 +199,7 @@ class ShibbolethHelper(BasePlugin):
         self.log(INFO, "Extracting credentials for handle: %s"%sesid)
         if not sesid:
             self.log(INFO, "Not Shib, Ending.")
-            return None
+            return {}
         #if not self.__validShibSession(sesid, self.__getIPAddress(request)):
 #       if not self.__validShibSession(request):
 #           self.log(INFO, "Not a valid Handle")
@@ -521,14 +521,11 @@ class ShibbolethHelper(BasePlugin):
             >>> self.shib._ShibbolethHelper__getShibbolethSessionId(request)
             u'_44847aa19938b0ff3dbb0505b50f7251'
         """
-
-        key = None
-        for _key in request.cookies.keys():
-                if _key.startswith("_shibsession_"):
-                        key = _key
-        if not key: return None
-        self.log(DEBUG, "__getShibbolethSessionId: %s" % request.cookies[key])
-        return request.cookies[key]
+        for key in request.cookies.keys():
+                if key.startswith("_shibsession_"):
+                        self.log(DEBUG, "__getShibbolethSessionId: %s" % request.cookies[key])
+                        return request.cookies[key]
+        return None
 
 #    security.declarePrivate('__validShibSession')
 #    def __validShibSession(self, shibSessionId, ip):
@@ -776,6 +773,10 @@ class ShibbolethHelper(BasePlugin):
         if REQUEST:
             if self._op_switch.has_key(op_type):
                 if not self._op_switch[op_type](REQUEST, map):
+                    if mapping == "Role":
+                        return REQUEST.RESPONSE.redirect(REQUEST['URL1'] + '/manage_roles')
+                    if mapping == "Group":
+                        return REQUEST.RESPONSE.redirect(REQUEST['URL1'] + '/manage_roles')
                     return REQUEST.RESPONSE.redirect(REQUEST['HTTP_REFERER'])
 
 
