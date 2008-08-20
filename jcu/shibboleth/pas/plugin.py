@@ -53,7 +53,7 @@ class ShibbolethHelper(BasePlugin):
                   ({'label': 'Shibboleth Provider Attribute',
                     'id': Constants.idp_identifier_attribute,
                     'type': 'string',
-                    'mode': 'w', 'value':'HTTP_SHIB_IDENTITY_PROVIDER'},
+                    'mode': 'w',},
                    {'label':'User Common Name Attribute',
                     'id': Constants.user_cn_attribute,
                     'type': 'string',
@@ -321,7 +321,6 @@ class ShibbolethHelper(BasePlugin):
               'HTTP_SHIB_PERSON_COMMONNAME': 'Matthew Morgan',\
               'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au',\
               'HTTP_SHIB_PERSON_SURNAME': 'Morgan',\
-              'HTTP_UID': 'matthew',\
               'HTTP_X_FORWARDED_FOR': '137.219.45.217',\
               'HTTP_X_FORWARDED_HOST': 'globus-matthew.hpc.jcu.edu.au',\
               'HTTP_X_FORWARDED_SERVER': 'globus-matthew.hpc.jcu.edu.au',}
@@ -445,7 +444,6 @@ class ShibbolethHelper(BasePlugin):
               'HTTP_SHIB_PERSON_COMMONNAME': 'Matthew Morgan', \
               'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', \
               'HTTP_SHIB_PERSON_SURNAME': 'Morgan', \
-              'HTTP_UID': 'matthew', \
               'HTTP_USER_AGENT': 'Mozilla/5.0 (X11; U; Linux i686; en; rv:1.9.0.1) Gecko/20080528 Epiphany/2.22 Firefox/3.0', 'HTTP_VIA': '1.1 globus-matthew.hpc.jcu.edu.au', \
               'HTTP_X_FORWARDED_FOR': '137.219.45.217', \
               'HTTP_X_FORWARDED_HOST': 'globus-matthew.hpc.jcu.edu.au', \
@@ -474,8 +472,7 @@ class ShibbolethHelper(BasePlugin):
               'HTTP_X_FORWARDED_HOST': 'globus-matthew.hpc.jcu.edu.au', \
               'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', \
               'login': u'_44847aa19938b0ff3dbb0505b50f7251', \
-              'HTTP_ACCEPT_ENCODING': 'gzip,deflate', \
-              'HTTP_UID': 'matthew'}
+              'HTTP_ACCEPT_ENCODING': 'gzip,deflate'}
 
         """
         toRet={}
@@ -747,7 +744,30 @@ class ShibbolethHelper(BasePlugin):
 
     security.declareProtected( ManageUsers, 'manage_mappings')
     def manage_mappings(self, op_type, mapping, REQUEST=None):
-        """This method is called by the mapping/import export pages to carry out there operations."""
+        """
+        This method is called by the mapping/import export pages to carry out there operations.
+
+
+            >>> import UserDict
+            >>> class RESPONSE:
+            ...     def redirect(self, *args):
+            ...         pass
+            >>> class FuxRequest(UserDict.UserDict):
+            ...     form = {}
+            ...     RESPONSE = RESPONSE()
+            ...
+            >>> request = FuxRequest({'item': 'Manager', 'mapping': 'Role', 'op_type': 'add_item', 'URL1': 'http://localhost'})
+            >>> request.form = {'item': 'Manager', 'mapping': 'Role', 'op_type': 'add_item'}
+            >>> self.shib.manage_mappings('add_item', 'Role', request)
+            >>> self.shib.getMap('Role')
+            {'Manager': [[0, '', 0, '', 0, 0]]}
+
+            >>> request = FuxRequest({'add_row_count': '1', 'brop:0': '0', 'closing_bracket:0': '0', 'item': 'Manager', 'mapping': 'Role', 'op_type': 'manage_item', 'opening_bracket:0': '0', 'opp_type:0': '0', 'save_map': 'Save Role Map', 'var_name:0': 'HTTP_REMOTE_USER', 'var_value:0': 'testuser1', 'URL1': 'http://localhost'})
+            >>> request.form = {'opening_bracket:0': '0', 'closing_bracket:0': '0', 'mapping': 'Role', 'var_value:0': 'testuser1', 'item': 'Manager', 'brop:0': '0', 'opp_type:0': '0', 'op_type': 'manage_item', 'save_map': 'Save Role Map', 'add_row_count': '1', 'var_name:0': 'HTTP_REMOTE_USER'}
+            >>> self.shib.manage_mappings('manage_item', 'Role', request)
+            >>> self.shib.getMap('Role')
+            {'Manager': [[0, 'HTTP_REMOTE_USER', 0, 'testuser1', 0, 0]]}
+        """
         if self._op_switch is None: self.__setup_op_switch()
         if self._mapping_map.has_key(mapping):
                 map = self._mapping_map[mapping]
@@ -808,7 +828,7 @@ class ShibbolethHelper(BasePlugin):
             >>> self.shib._ShibbolethHelper__compileItem('Anonymous', [[0, 'HTTP_REMOTE_USER', 0, 'test', 0, 1]])
             (None, "def assign_target(attributes):\\n  import re\\n  if  attributes['HTTP_REMOTE_USER'] == 'test' : return True\\n  return False\\n", <function assign_target at ...>)
 
-            >>> self.shib.compileItem({'Owner': [[0, 'HTTP_REMOTE_USER', 0, 'matthew', 0, 0]]}, 'Owner', 'Role')
+            >>> self.shib._ShibbolethHelper__compileItem('Owner', [[0, 'HTTP_REMOTE_USER', 0, 'matthew', 0, 0]])
             (None, "def assign_target(attributes):\\n  import re\\n  if  attributes['HTTP_REMOTE_USER'] == 'matthew' : return True\\n  return False\\n", <function assign_target at ...>)
         """
         self.log(DEBUG, "Compiling: %s, %s" % (name, map))
