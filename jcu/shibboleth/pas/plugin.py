@@ -20,7 +20,7 @@ from persistent.mapping import PersistentMapping
 import interface
 import plugins
 
-LOG = logging.getLogger("jcu.shibboleth.pas")
+log = logging.getLogger("jcu.shibboleth.pas")
 
 class ShibbolethHelper(BasePlugin):
     '''Multi-plugin Shibboleth
@@ -602,7 +602,7 @@ class ShibbolethHelper(BasePlugin):
         """
         Log a message for this object.
         """
-        LOG.log(level, ": "+ str(message))
+        log.log(level, ": "+ str(message))
 
 
     security.declarePrivate('__caculateMapping')
