@@ -58,6 +58,10 @@ Configure Shib user one shib user to have hightened permissions
     >>> rolemap.submit(name='save_map')
 
 
+    >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers()
+    ({'editurl': 'shib/manage_users?user_id=shibuser1', 'login': 'shibuser1', 'pluginid': 'shib', 'id': 'shibuser1'},)
+
+
 Setup Second Shib user
 -----------------------
 

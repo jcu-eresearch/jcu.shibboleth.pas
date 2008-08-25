@@ -2,6 +2,7 @@
 '''
 
 from os import path
+import copy
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from App.class_init import default__class_init__ as InitializeClass
 
@@ -9,6 +10,7 @@ from Products.PluggableAuthService.interfaces.plugins import IRoleEnumerationPlu
 from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
 from Products.PluggableAuthService.utils import classImplements
 from Products.PluggableAuthService.permissions import ManageUsers
+from Products.PluggableAuthService.plugins.ZODBUserManager import _ZODBUserFilter
 
 from ConstantsPageTemplateFile import mypt
 import Constants as Constants
@@ -259,49 +261,56 @@ class ShibbolethHelper(BasePlugin):
     #
     security.declarePrivate('enumerateUsers')
     def enumerateUsers(self, id=None, login=None, exact_match=False, sort_by=None, max_results=None, **kw):
+        """ See IUserEnumerationPlugin.
         """
+        user_info = []
+        user_ids = []
+        plugin_id = self.getId()
 
-            >>> from zope.publisher.browser import TestRequest
-            >>> shib_headers = {'HTTP_COOKIE': '_saml_idp=aHR0cHM6Ly9nbG9idXMtbWF0dGhldy5ocGMuamN1LmVkdS5hdS9zaGliYm9sZXRo; _shibstate_5dc97d035cb931c8123d34c999e481deb8e5204c=https%3A%2F%2Fglobus-matthew.hpc.jcu.edu.au%2Fmattotea%2Facl_users%2Fshib%2Flogin; _shibsession_5dc97d035cb931c8123d34c999e481deb8e5204c=_44847aa19938b0ff3dbb0505b50f7251; _ZopeId="59459141A3fUP2UyaZk"', 'HTTP_SHIB_REMOTE_USER': 'matthew'}
-            >>> request = TestRequest(**shib_headers)
-            >>> request.SESSION = self.app.session_data_manager.getSessionData()
-            >>> self.app.acl_users.shib.REQUEST.environ.update({'HTTP_SHIB_REMOTE_USER': 'matthew'})
-            >>> self.shib.REQUEST.SESSION = self.app.session_data_manager.getSessionData()
-            >>> self.shib.enumerateUsers(id='matthew', exact_match=True)
+        if isinstance( id, basestring ):
+            id = [id]
 
+        if isinstance( login, basestring ):
+            login = [login]
 
-            >>> self.shib.enumerateUsers()
+        keywords = copy.deepcopy(kw)
+        keywords.update( { 'id' : id
+                         , 'login' : login
+                         , 'exact_match' : exact_match
+                         , 'sort_by' : sort_by
+                         , 'max_results' : max_results
+                         }
+                       )
 
-        """
-        self.log(INFO,"Trying to enumerate users.")
-        self.log(INFO, "ID: %s, Login: %s, Exact Match: %s, Sort By: %s, Max Results: %s"%(id,login,exact_match,sort_by,max_results))
-        request = self.REQUEST
-        session = request.SESSION
-        if not exact_match:
-            self.log(INFO, "Sorry, Exact Match Enumerations Only.")
-            return None
-        session_id = self.__getShibbolethSessionId(request)
-        if not session_id:
-            self.log(INFO, "Not a Shib request, so won't try to enumerateUsers.")
-            return None
+        if exact_match:
+            if id:
+                user_ids.extend([x for x in id])
+            elif login:
+                user_ids.extend([x for x in login])
+            else:
+                return {}
+            user_filter = None
 
-        #This stopes an exception that happens after a user is redirected by
-        #A challange, but the request continues to be processed.
-        if not session.has_key('shibboleth.session'):
-            return None
-#               __validShibSession(request)
+        if not user_ids:
+            user_ids = self.listUserIds()
+            user_ids.sort()
+            user_filter = _ZODBUserFilter(id, login, **kw)
 
-        if session[session_id]['login'] == session_id:
-           self.log(INFO, "User ID not provided by IDP, will not enumerateUsers (because what is the point?).")
-           return None
-        # TODO: Should also contain editurl in the form users/manage_users?user_id=admin
-        if isinstance(session[session_id],dict) and session[session_id]['login'] is id:
-            self.log(INFO,str({'id':session[session_id]['login'],'login':session[session_id][self.getProperty('userid_attribute')],'pluginid':self.getId()}))
-            return ({'id':session[session_id]['login'],'login':session[session_id][self.getProperty('userid_attribute')],'pluginid':self.getId()},)
-        if self.store.has_key(id) or self.store.has_key(login):
-            return ({'id':id, 'login':id, 'pluginid':self.getId()},)
-        self.log(INFO, "Not Found.")
-        return None
+        for user_id in user_ids:
+
+            if self.store.get(user_id):
+                e_url = '%s/manage_users' % self.getId()
+                qs = 'user_id=%s' % user_id
+
+                info = { 'id' : self.prefix + user_id
+                       , 'login' : user_id
+                       , 'pluginid' : plugin_id
+                       , 'editurl' : '%s?%s' % (e_url, qs)
+                       }
+                if not user_filter or user_filter(info):
+                    user_info.append(info)
+
+        return tuple(user_info)
 
 
     security.declarePublic('login')
@@ -390,6 +399,17 @@ class ShibbolethHelper(BasePlugin):
 #       """
 #       print self.role_mapping
 #        return str(self.role_mapping)
+
+
+    #
+    #   (notional)IZODBUserManager interface
+    #
+    security.declareProtected(ManageUsers, 'listUserIds')
+    def listUserIds(self):
+
+        """ -> ( user_id_1, ... user_id_n )
+        """
+        return self.store.keys()
 
 
     security.declarePrivate('__extract_shib_data')

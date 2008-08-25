@@ -72,8 +72,6 @@ class TestCase(ZopeTestCase.Functional, ZopeTestCase.ZopeTestCase):
         path = os.path.dirname(jcu.shibboleth.pas.__file__)
         self.app.test_folder_1_.acl_users.shib.manage_changeProperties({"Shibboleth_Config_Dir":path + os.sep +  'tests'})
 
-        #from ipdb import set_trace; set_trace()
-
 
 import unittest
 from Products.PluggableAuthService.tests.conformance \
@@ -148,6 +146,203 @@ class ConformanceTestCase(unittest.TestCase,
         request = FauxSettableRequest(RESPONSE=response)
 
         self.assertEqual(helper.extractCredentials(request), {})
+
+    def test_enumerateUsers_no_criteria(self):
+
+        from Products.PluggableAuthService.tests.test_PluggableAuthService \
+            import FauxRoot
+
+        root = FauxRoot()
+        shib = self._makeOne( id='no_crit' ).__of__( root )
+
+        ID_LIST = ( 'foo', 'bar', 'baz', 'bam' )
+
+        for id in ID_LIST:
+
+            shib.store[id] =  {u'HTTP_REMOTE_USER': id, 'SHIB_PERSON_MAIL':'%s@example.com' % id }
+
+        info_list = shib.enumerateUsers()
+
+        self.assertEqual( len( info_list ), len( ID_LIST ) )
+
+        sorted = list( ID_LIST )
+        sorted.sort()
+
+        for i in range( len( sorted ) ):
+
+            self.assertEqual( info_list[ i ][ 'id' ], sorted[ i ] )
+            # Currently the ID is the same as the Login
+            #self.assertEqual( info_list[ i ][ 'login' ]
+            #                , '%s@example.com' % sorted[ i ] )
+            self.assertEqual( info_list[ i ][ 'pluginid' ], 'no_crit' )
+            self.assertEqual( info_list[ i ][ 'editurl' ]
+                            , 'no_crit/manage_users?user_id=%s' % sorted[ i ])
+
+
+    def test_enumerateUsers_exact( self ):
+
+        from Products.PluggableAuthService.tests.test_PluggableAuthService \
+            import FauxRoot
+
+        root = FauxRoot()
+        shib = self._makeOne( id='exact' ).__of__( root )
+
+        ID_LIST = ( 'foo', 'bar', 'baz', 'bam' )
+
+        for id in ID_LIST:
+
+            shib.store[id] =  {u'HTTP_REMOTE_USER': id, 'SHIB_PERSON_MAIL':'%s@example.com' % id }
+
+        info_list = shib.enumerateUsers( id='bar', exact_match=True )
+
+        self.assertEqual( len( info_list ), 1 )
+        info = info_list[ 0 ]
+
+        self.assertEqual( info[ 'id' ], 'bar' )
+        # Currently the ID is the same as the Login
+        #self.assertEqual( info[ 'login' ], 'bar@example.com' )
+        self.assertEqual( info[ 'pluginid' ], 'exact' )
+        self.assertEqual( info[ 'editurl' ]
+                        , 'exact/manage_users?user_id=bar' )
+
+
+
+    def test_enumerateUsers_partial( self ):
+
+        from Products.PluggableAuthService.tests.test_PluggableAuthService \
+            import FauxRoot
+
+        root = FauxRoot()
+        shib = self._makeOne( id='partial' ).__of__( root )
+
+        ID_LIST = ( 'foo', 'bar', 'baz', 'bam' )
+
+        for id in ID_LIST:
+
+            shib.store[id] =  {u'HTTP_REMOTE_USER': id, 'SHIB_PERSON_MAIL':'%s@example.com' % id }
+
+        info_list = shib.enumerateUsers( id=['a','o'], exact_match=False )
+
+        self.assertEqual( len( info_list ), len( ID_LIST ) ) # all match
+
+        sorted = list( ID_LIST )
+        sorted.sort()
+
+        for i in range( len( sorted ) ):
+
+            self.assertEqual( info_list[ i ][ 'id' ], sorted[ i ] )
+            #self.assertEqual( info_list[ i ][ 'login' ]
+            #                , '%s@example.com' % sorted[ i ] )
+            self.assertEqual( info_list[ i ][ 'pluginid' ], 'partial' )
+            self.assertEqual( info_list[ i ][ 'editurl' ]
+                            , 'partial/manage_users?user_id=%s' % sorted[ i ])
+
+        info_list = shib.enumerateUsers( id='ba', exact_match=False )
+
+        self.assertEqual( len( info_list ), len( ID_LIST ) - 1 ) # no 'foo'
+
+        sorted = list( ID_LIST )
+        sorted.sort()
+
+        for i in range( len( sorted ) - 1 ):
+
+            self.assertEqual( info_list[ i ][ 'id' ], sorted[ i ] )
+            #self.assertEqual( info_list[ i ][ 'login' ]
+            #                , '%s@example.com' % sorted[ i ] )
+            self.assertEqual( info_list[ i ][ 'pluginid' ], 'partial' )
+            self.assertEqual( info_list[ i ][ 'editurl' ]
+                            , 'partial/manage_users?user_id=%s' % sorted[ i ])
+
+
+    def test_enumerateUsers_other_criteria( self ):
+
+        from Products.PluggableAuthService.tests.test_PluggableAuthService \
+            import FauxRoot
+
+        root = FauxRoot()
+        shib = self._makeOne( id='partial' ).__of__( root )
+
+        ID_LIST = ( 'foo', 'bar', 'baz', 'bam' )
+
+        for id in ID_LIST:
+
+            shib.store[id] =  {u'HTTP_REMOTE_USER': id, 'SHIB_PERSON_MAIL':'%s@example.com' % id }
+
+        info_list = shib.enumerateUsers( email='bar@example.com',
+                                        exact_match=False )
+        self.assertEqual( len( info_list ), 0 )
+
+    def test_enumerateUsers_unicode( self ):
+
+        from Products.PluggableAuthService.tests.test_PluggableAuthService \
+            import FauxRoot
+
+        root = FauxRoot()
+        shib = self._makeOne( id='partial' ).__of__( root )
+
+        ID_LIST = ( 'foo', 'bar', 'baz', 'bam' )
+
+        for id in ID_LIST:
+
+            shib.store[id] =  {u'HTTP_REMOTE_USER': id, 'SHIB_PERSON_MAIL':'%s@example.com' % id }
+
+        info_list = shib.enumerateUsers( id = u'abc',
+                                        exact_match=False )
+        self.assertEqual( len( info_list ), 0 )
+
+
+    def test_enumerateUsers_exact_nonesuch( self ):
+
+        from Products.PluggableAuthService.tests.test_PluggableAuthService \
+            import FauxRoot
+
+        root = FauxRoot()
+        shib = self._makeOne( id='exact_nonesuch' ).__of__( root )
+
+        ID_LIST = ( 'foo', 'bar', 'baz', 'bam' )
+
+        for id in ID_LIST:
+
+            shib.store[id] =  {u'HTTP_REMOTE_USER': id, 'SHIB_PERSON_MAIL':'%s@example.com' % id }
+
+        self.assertEquals( shib.enumerateUsers( id='qux', exact_match=True )
+                         , () )
+
+
+    def test_enumerateUsers_multiple_logins( self ):
+
+        from Products.PluggableAuthService.tests.test_PluggableAuthService \
+            import FauxRoot
+
+        root = FauxRoot()
+        shib = self._makeOne( id='partial' ).__of__( root )
+
+        ID_LIST = ( 'foo', 'bar', 'baz', 'bam' )
+        LOGIN_LIST = [ '%s@example.com' % x for x in ID_LIST ]
+
+        for i in range( len( ID_LIST ) ):
+
+            shib.store[ID_LIST[i]] =  {u'HTTP_REMOTE_USER': ID_LIST[i], 'SHIB_PERSON_MAIL':'%s' % LOGIN_LIST[i] }
+
+        info_list = shib.enumerateUsers( login=ID_LIST )
+
+        self.assertEqual( len( info_list ), len( ID_LIST ) )
+
+        for info in info_list:
+            self.failUnless( info[ 'id' ] in ID_LIST )
+            self.failUnless( info[ 'login' ] in ID_LIST )
+
+        SUBSET_IDS = ID_LIST[:3]
+
+        info_list = shib.enumerateUsers( login=SUBSET_IDS )
+
+        self.assertEqual( len( info_list ), len( SUBSET_IDS ) )
+
+        for info in info_list:
+            self.failUnless( info[ 'id' ] in SUBSET_IDS )
+            self.failUnless( info[ 'login' ] in SUBSET_IDS )
+
+
 
 def test_suite():
     return unittest.TestSuite([
