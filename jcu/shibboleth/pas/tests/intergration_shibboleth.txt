@@ -1,0 +1,81 @@
+Tests for jcu.shibboleth.pas
+
+test setup
+----------
+
+    >>> from Testing.ZopeTestCase import user_name, user_password
+    >>> from Products.Five.testbrowser import Browser
+
+Setup Shib user
+---------------
+
+    >>> user1 = Browser()
+    >>> shib_url = "%s" % self.app.test_folder_1_.acl_users.shib.absolute_url()
+    >>> user1.addHeader('REMOTE_USER', 'shibuser1')
+    >>> user1.addHeader('SHIB_IDENTITY_PROVIDER', 'https://localdomain.com/shibboleth')
+    >>> user1.addHeader('SHIB_PERSON_MAIL', 'john.smith@localdomain.com')
+    >>> user1.addHeader('SHIB_PERSON_COMMONNAME', 'John Smith')
+    >>> from mechanize import Cookie
+    >>> shib_cookie = Cookie(version=0, name='_shibsession_5dc97d035cb931c8123d34c999e481deb8e5204c', value='a48647d803d10048d2838c0b9bde78b8', port=None, port_specified=False, domain='nohost.local', domain_specified=False, domain_initial_dot=False, path='/', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={}, rfc2109=False)
+    >>> user1.mech_browser._ua_handlers['_cookies'].cookiejar.set_cookie(shib_cookie)
+    >>> from mechanize import HTTPError
+    >>> try:
+    ...     user1.open("%s/login" % shib_url)
+    ... except HTTPError:
+    ...     pass
+    >>> user1.url
+    'http://nohost/test_folder_1_/login_form?form.submitted=1'
+
+Configure Shib user one shib user to have hightened permissions
+---------------------------------------------------------------
+
+    >>> manager = Browser()
+    >>> manager.addHeader('Authorization', 'Basic %s:%s' % (user_name, user_password))
+    >>> manager.open("%s/manage_roles" % shib_url)
+    >>> manager.url
+    'http://nohost/test_folder_1_/acl_users/shib/manage_roles'
+    >>> newrolemap = manager.getForm(index=0)
+    >>> roleselect = newrolemap.getControl(name='item')
+    >>> roleselect.displayOptions
+    ['Owner', 'Manager', 'test_role_1_']
+    >>> roleselect.getControl('Manager').click()
+    >>> newrolemap.submit()
+    >>> manager.url
+    'http://nohost/test_folder_1_/acl_users/shib/manage_roles'
+    >>> rolemap = manager.getForm(name='Manager')
+    >>> shib_attr = rolemap.getControl(name="var_name:0")
+    >>> shib_attr.displayOptions
+    ['HTTP_REMOTE_USER', 'HTTP_SHIB_APPLICATION_ID', 'HTTP_SHIB_AUTHENTICATION_METHOD', 'HTTP_SHIB_EP_AFFILIATION', 'HTTP_SHIB_EP_ENTITLEMENT', 'HTTP_SHIB_EP_ORGDN', 'HTTP_SHIB_EP_ORGUNITDN', 'HTTP_SHIB_EP_PRIMARYAFFILIATION', 'HTTP_SHIB_EP_PRIMARYORGUNITDN', 'HTTP_SHIB_EP_UNSCOPEDAFFILIATION', 'HTTP_SHIB_IDENTITY_PROVIDER', 'HTTP_SHIB_INETORGPERSON_BUSINESSCAT', 'HTTP_SHIB_INETORGPERSON_CARLICENSE', 'HTTP_SHIB_INETORGPERSON_DEPTNUM', 'HTTP_SHIB_INETORGPERSON_DISPLAYNAME', 'HTTP_SHIB_INETORGPERSON_EMPLOYEENUM', 'HTTP_SHIB_INETORGPERSON_EMPLOYEETYPE', 'HTTP_SHIB_INETORGPERSON_GIVENNAME', 'HTTP_SHIB_INETORGPERSON_INITIALS', 'HTTP_SHIB_INETORGPERSON_MAIL', 'HTTP_SHIB_INETORGPERSON_MANAGER', 'HTTP_SHIB_INETORGPERSON_PREFLANG', 'HTTP_SHIB_INETORGPERSON_ROOMNUM', 'HTTP_SHIB_ORGPERSON_FAX', 'HTTP_SHIB_ORGPERSON_LOCALITY', 'HTTP_SHIB_ORGPERSON_OFFICENAME', 'HTTP_SHIB_ORGPERSON_ORGUNIT', 'HTTP_SHIB_ORGPERSON_POBOX', 'HTTP_SHIB_ORGPERSON_POSTALCODE', 'HTTP_SHIB_ORGPERSON_SEEALSO', 'HTTP_SHIB_ORGPERSON_STATE', 'HTTP_SHIB_ORGPERSON_STREET', 'HTTP_SHIB_ORGPERSON_TITLE', 'HTTP_SHIB_ORIGIN_SITE', 'HTTP_SHIB_PERSON_COMMONNAME', 'HTTP_SHIB_PERSON_DESCRIPTION', 'HTTP_SHIB_PERSON_MAIL', 'HTTP_SHIB_PERSON_SURNAME', 'HTTP_SHIB_PERSON_TELEPHONENUMBER', 'HTTP_SHIB_TARGETEDID']
+    >>> shib_attr.clear()
+    >>> shib_attr.getControl('HTTP_REMOTE_USER').click()
+    >>> shib_operation = rolemap.getControl(name="opp_type:0")
+    >>> shib_operation.displayOptions
+    ['==', '!=', '>', '=>', '<', '<=', 'matches', '!matches', 'search', '!search', 'exists', '!exists']
+    >>> shib_operation.clear()
+    >>> shib_operation.getControl('==').click()
+    >>> shib_value = rolemap.getControl(name="var_value:0")
+    >>> shib_value.value = 'shibuser2'
+    >>> rolemap.submit(name='save_map')
+
+
+Setup Second Shib user
+-----------------------
+
+    >>> aclusers_url = "%s" % self.app.test_folder_1_.acl_users.absolute_url()
+    >>> user2 = Browser()
+    >>> user2.addHeader('REMOTE_USER', 'shibuser2')
+    >>> user2.addHeader('SHIB_IDENTITY_PROVIDER', 'https://localdomain.com/shibboleth')
+    >>> user2.addHeader('SHIB_PERSON_MAIL', 'jane.smith@localdomain.com')
+    >>> user2.addHeader('SHIB_PERSON_COMMONNAME', 'Jane Smith')
+    >>> from mechanize import Cookie
+    >>> shib_cookie = Cookie(version=0, name='_shibsession_5dc97d035cb931c8123d34c999e481deb8e5204d', value='a48647d803d10048d2838c0b9bde78b9', port=None, port_specified=False, domain='nohost.local', domain_specified=False, domain_initial_dot=False, path='/', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={}, rfc2109=False)
+    >>> user2.mech_browser._ua_handlers['_cookies'].cookiejar.set_cookie(shib_cookie)
+    >>> from mechanize import HTTPError
+    >>> try:
+    ...     user2.open("%s/login" % shib_url)
+    ... except HTTPError:
+    ...     pass
+    >>> user2.url
+    'http://nohost/test_folder_1_/login_form?form.submitted=1'
+    >>> user2.open("%s/manage_search" % aclusers_url)
+
