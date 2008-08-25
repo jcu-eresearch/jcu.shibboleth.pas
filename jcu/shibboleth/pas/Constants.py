@@ -8,8 +8,6 @@ default_user_cn_attribute_value = 'HTTP_SHIB_PERSON_COMMONNAME'
 default_idp_identifier_attribute_value = 'HTTP_SHIB_IDENTITY_PROVIDER'
 default_shib_config_dir = '/etc/shibboleth'
 
-#Session Key
-session_id = 'session_id'
 #defaultProperties = {max_brackets:[6, 'int'],
 #                     user_uid_attribute: ['HTTP_SHIB_PERSON_UID','string'],
 #                    user_cn_attribute: ['HTTP_SHIB_PERSON_COMMONNAME','string']}

@@ -103,6 +103,9 @@ class ShibbolethHelper(BasePlugin):
         self._mapping_map = {Constants.RoleM: self.role_mapping, Constants.GroupM:self.group_mapping}
         self.__setup_compiled_func_map()
 
+        # Shibboleth attributes store
+        self.store =  PersistentMapping()
+
         #Properties for the Property Manager.
         self.max_brackets = 6
         self.__dict__[Constants.user_cn_attribute] = Constants.default_user_cn_attribute_value
@@ -122,34 +125,32 @@ class ShibbolethHelper(BasePlugin):
     def authenticateCredentials(self, credentials):
         """Authenticate Credentials
         """
-        if credentials['extractor'] != self.getId():
-           self.log(INFO, "Will only authenticate Shibboleth credentials.")
-           return None
-        session = self.REQUEST.SESSION
-        self.log(INFO, 'Authentication Requested.')
+        if not credentials.has_key('shibboleth.session'):
+            log.debug("Will only authenticate Shibboleth credentials.")
+            return None
+
+        shibsession = credentials.get('shibboleth.session')
+        log.debug('Authentication Requested.')
         url = "%s/%s"%(self.absolute_url(), self.__login_location)
         request = self.REQUEST
-        self.log(INFO, "URLS: %s, %s"%(request.URL, url))
+        log.debug("URLS: %s, %s"%(request.URL, url))
         if request.URL == url:
-            self.log(INFO, "Not attempting to authenticate login request.")
+            log.debug("Not attempting to authenticate login request.")
             return None
-        shibSessionId = self.__getShibbolethSessionId(request)
-        #self.log(INFO, 'Session ID: %s'%(shibSessionId,))
-        #self.log(INFO, 'Credentials: %s'%(str(credentials),))
 
-        #if not self.__validShibSession(shibSessionId, self.__getIPAddress(request)) or (not session.has_key(credentials['login'])):
-        if not self.__validShibSession(request): # or (not session.has_key(credentials['login'])):
-            self.log(INFO, 'Invalid Session')
-            if shibSessionId != None:
+        # XXX don't think that this is required because if it comes this far it has already had the shib session extracted by the previous interface
+        if not self.__validShibSession(request):
+            log.info('Invalid Session')
+            if shibsession != None:
                 self.challenge(self.REQUEST, self.REQUEST['RESPONSE'])
             return None
 
-        data = session[credentials['shibboleth.session']]
-        if not data.has_key(self.getProperty(Constants.user_cn_attribute)):
-               principle_name = "Pseudo-Anonymous: %s"%shibSessionId
-        else:
-               principle_name = data[self.getProperty(Constants.user_cn_attribute)]
-        return (data['login'], principle_name)
+        if credentials['shibboleth.id'] == credentials['shibboleth.session']:
+            login = "Pseudo-Anonymous: %s" % shibSessionId
+            return (self.prefix + shibsession, login)
+
+        login = credentials.get('shibboleth.id')
+        return (login, login)
 
 
     #
@@ -176,7 +177,6 @@ class ShibbolethHelper(BasePlugin):
                 resp.redirect("%s?came_from=%s"%(url, came_from), lock=1)
                 return True
 
-        #if not self.__validShibSession(shibSessionId, self.__getIPAddress(request)):
         if not self.__validShibSession(request):
                 self.log(INFO, "Not a valid Request")
                 resp.redirect("%s?came_from=%s"%(url, came_from))
@@ -195,11 +195,15 @@ class ShibbolethHelper(BasePlugin):
     def extractCredentials(self, request ):
         """Extract the credentials
         """
+        if request.SESSION.has_key('shibboleth.session') and request.SESSION.has_key('shibboleth.id'):
+            return {"shibboleth.session": request.SESSION.get('shibboleth.session'),
+                    "shibboleth.id": request.SESSION.get('shibboleth.id')}
         shibsession = self.__getShibbolethSessionId(request)
         self.log(DEBUG, "extractCredentials: %s" % shibsession)
         if not shibsession:
             self.log(DEBUG, "extractCredentials: Not Shib")
             return {}
+        # Doesn't return login/password because no other tool can help authentication
         return {"shibboleth.session": shibsession}
 
 
@@ -207,7 +211,7 @@ class ShibbolethHelper(BasePlugin):
     #    IRolesPlugin implementation
     #
     security.declarePrivate('getRolesForPrincipal')
-    def getRolesForPrincipal( self, principal, request=None ):
+    def getRolesForPrincipal(self, principal, request=None):
         """
 
             >>> from zope.publisher.browser import TestRequest
@@ -217,20 +221,21 @@ class ShibbolethHelper(BasePlugin):
             >>> self.app.acl_users.shib.REQUEST.environ.update({'HTTP_SHIB_REMOTE_USER': 'matthew'})
             >>> self.shib.REQUEST.SESSION = self.app.session_data_manager.getSessionData()
             >>> ignore = self.shib.login()
-            >>> self.shib.getRolesForPrincipal('matthew', request)
+            >>> from Products.PluggableAuthService.plugins.tests.helpers import DummyUser
+            >>> self.shib.getRolesForPrincipal(DummyUser('matthew'), request)
             ()
         """
-        self.log(INFO, "Principle: %s"%principal)
+        self.log(INFO, "Principal: %s"%principal)
         if not hasattr(self,'_v_compiled_mapping_func_map'):
            self.__compileMappings()
-        return self.__caculateMapping(self.REQUEST, self._v_compiled_mapping_func_map[Constants.RoleM])
+        return self.__caculateMapping(principal.getId(), self._v_compiled_mapping_func_map[Constants.RoleM])
 
 
     #
     #    IGroupsPlugin implementation
     #
     security.declarePrivate('getRolesForPrincipal')
-    def getGroupsForPrincipal( self, principal, request=None ):
+    def getGroupsForPrincipal(self, principal, request=None):
         """
 
             >>> from zope.publisher.browser import TestRequest
@@ -240,12 +245,13 @@ class ShibbolethHelper(BasePlugin):
             >>> self.app.acl_users.shib.REQUEST.environ.update({'HTTP_SHIB_REMOTE_USER': 'matthew'})
             >>> self.shib.REQUEST.SESSION = self.app.session_data_manager.getSessionData()
             >>> ignore = self.shib.login()
-            >>> self.shib.getGroupsForPrincipal('matthew', request)
+            >>> from Products.PluggableAuthService.plugins.tests.helpers import DummyUser
+            >>> self.shib.getGroupsForPrincipal(DummyUser('matthew'), request)
             ()
         """
         if not hasattr(self,'_v_compiled_mapping_func_map'):
            self.__compileMappings()
-        return self.__caculateMapping(self.REQUEST, self._v_compiled_mapping_func_map[Constants.GroupM])
+        return self.__caculateMapping(principal.getId(), self._v_compiled_mapping_func_map[Constants.GroupM])
 
 
     #
@@ -281,16 +287,19 @@ class ShibbolethHelper(BasePlugin):
 
         #This stopes an exception that happens after a user is redirected by
         #A challange, but the request continues to be processed.
-        if not session.has_key(session_id): return None
+        if not session.has_key('shibboleth.session'):
+            return None
 #               __validShibSession(request)
 
         if session[session_id]['login'] == session_id:
            self.log(INFO, "User ID not provided by IDP, will not enumerateUsers (because what is the point?).")
            return None
-        #for key in session.keys():
+        # TODO: Should also contain editurl in the form users/manage_users?user_id=admin
         if isinstance(session[session_id],dict) and session[session_id]['login'] is id:
             self.log(INFO,str({'id':session[session_id]['login'],'login':session[session_id][self.getProperty('userid_attribute')],'pluginid':self.getId()}))
             return ({'id':session[session_id]['login'],'login':session[session_id][self.getProperty('userid_attribute')],'pluginid':self.getId()},)
+        if self.store.has_key(id) or self.store.has_key(login):
+            return ({'id':id, 'login':id, 'pluginid':self.getId()},)
         self.log(INFO, "Not Found.")
         return None
 
@@ -324,7 +333,7 @@ class ShibbolethHelper(BasePlugin):
             ...     c = c.split('=')
             ...     cookies[c[0].strip()] = unicode(c[1])
             >>> self.shib.login()
-            'https://globus-matthew.hpc.jcu.edu.au/mattotea/acl_users'
+            'https://globus-matthew.hpc.jcu.edu.au/mattotea/acl_users/login_form?form.submitted=1'
 
             >>> self.app.acl_users.shib.REQUEST.environ.update({'HTTP_REMOTE_USER': 'matthew'})
             >>> self.shib.login()
@@ -339,27 +348,22 @@ class ShibbolethHelper(BasePlugin):
         request = self.REQUEST
         response = request['RESPONSE']
         came_from = request.get('came_from')
-#       if not came_from:
-#           came_from = request['HTTP_REFERER']
-#       if not came_from:
-#           #came_from = "http://pandora.jcu.edu.au/shib"
-#           self.log(INFO, "came_from  not specified, using: %s"%request.BASE2)
-#           came_from = request.BASE2+"/login_form?form.submitted=1"
 
         session_id = self.__getShibbolethSessionId(request)
-        if not session_id: return False
+        # TODO should return the user some where useful after the failed login
+        if not session_id:
+            return False
 
-#       if not self.total_shib :
         session = self.REQUEST.SESSION
-        session[Constants.session_id] = session_id
-        session[session_id] = self.__extract_shib_data(request)
+        session['shibboleth.session'] = session_id
+
+        id, attributes = self.__extract_shib_data(request)
+        # Store the users attribute in the tool and in the users session
+        self.store[id] = attributes
+        session['shibboleth.id'] = id
         if not came_from:
             self.log(INFO, "came_from  not specified, using: %s"%request.BASE2)
-            if not session[session_id].has_key(self.getProperty('userid_attribute')):
-                came_from = request.BASE2
-            else:
-                came_from = request.BASE2+"/login_form?form.submitted=1"
-
+            came_from = request.BASE2+"/login_form?form.submitted=1"
         return response.redirect(came_from)
 
 
@@ -391,7 +395,7 @@ class ShibbolethHelper(BasePlugin):
     security.declarePrivate('__extract_shib_data')
     def __extract_shib_data(self, request):
         """
-        Extracts Credentials
+        Extracts Shibboleth information for the headers. Return a tuple containing the unique identifier of the user and dict of other shibboleth headers.
 
             >>> from zope.publisher.browser import TestRequest
             >>> shib_headers = { 'HTTP_SHIB_APPLICATION_ID': 'default', \
@@ -406,18 +410,16 @@ class ShibbolethHelper(BasePlugin):
               'HTTP_SHIB_PERSON_SURNAME': 'Morgan'}
             >>> request = TestRequest(**shib_headers)
             >>> self.shib._ShibbolethHelper__extract_shib_data(request)
-            {'HTTP_SHIB_PERSON_COMMONNAME': 'Matthew Morgan', \
-              'HTTP_SHIB_IDENTITY_PROVIDER': 'https://globus-matthew.hpc.jcu.edu.au/shibboleth', \
-              'HTTP_COOKIE': '_saml_idp=aHR0cHM6Ly9nbG9idXMtbWF0dGhldy5ocGMuamN1LmVkdS5hdS9zaGliYm9sZXRo; _shibstate_5dc97d035cb931c8123d34c999e481deb8e5204c=https%3A%2F%2Fglobus-matthew.hpc.jcu.edu.au%2Fmattotea%2Facl_users%2Fshib%2Flogin; _shibsession_5dc97d035cb931c8123d34c999e481deb8e5204c=_44847aa19938b0ff3dbb0505b50f7251; _ZopeId="59459141A3fUP2UyaZk"', \
-              'HTTP_SHIB_PERSON_SURNAME': 'Morgan', \
-              'HTTP_SHIB_APPLICATION_ID': 'default', \
-              'HTTP_SHIB_INETORGPERSON_GIVENNAME': 'Matthew', \
-              'HTTP_SHIB_EP_UNSCOPEDAFFILIATION': 'member;student', \
-              'HTTP_HOST': '127.0.0.1', \
-              'HTTP_SHIB_ORIGIN_SITE': 'https://globus-matthew.hpc.jcu.edu.au/shibboleth', \
-              'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', \
-              'login': u'_44847aa19938b0ff3dbb0505b50f7251', \
-              'HTTP_SHIB_AUTHENTICATION_METHOD': 'urn:oasis:names:tc:SAML:1.0:am:unspecified'}
+              ('_44847aa19938b0ff3dbb0505b50f7251', \
+              {u'HTTP_SHIB_PERSON_COMMONNAME': 'Matthew Morgan', \
+              u'HTTP_SHIB_IDENTITY_PROVIDER': 'https://globus-matthew.hpc.jcu.edu.au/shibboleth', \
+              u'HTTP_SHIB_PERSON_SURNAME': 'Morgan', \
+              u'HTTP_SHIB_APPLICATION_ID': 'default', \
+              u'HTTP_SHIB_INETORGPERSON_GIVENNAME': 'Matthew', \
+              u'HTTP_SHIB_EP_UNSCOPEDAFFILIATION': 'member;student', \
+              u'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', \
+              u'HTTP_SHIB_ORIGIN_SITE': 'https://globus-matthew.hpc.jcu.edu.au/shibboleth', \
+              u'HTTP_SHIB_AUTHENTICATION_METHOD': 'urn:oasis:names:tc:SAML:1.0:am:unspecified'})
 
             >>> shib_headers = {'HTTP_ACCEPT': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', \
               'HTTP_ACCEPT_CHARSET': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7', \
@@ -439,52 +441,41 @@ class ShibbolethHelper(BasePlugin):
               'HTTP_USER_AGENT': 'Mozilla/5.0 (X11; U; Linux i686; en; rv:1.9.0.1) Gecko/20080528 Epiphany/2.22 Firefox/3.0', 'HTTP_VIA': '1.1 globus-matthew.hpc.jcu.edu.au', \
               'HTTP_X_FORWARDED_FOR': '137.219.45.217', \
               'HTTP_X_FORWARDED_HOST': 'globus-matthew.hpc.jcu.edu.au', \
-              'HTTP_X_FORWARDED_SERVER': 'globus-matthew.hpc.jcu.edu.au',}
+              'HTTP_X_FORWARDED_SERVER': 'globus-matthew.hpc.jcu.edu.au', \
+              'HTTP_REMOTE_USER': 'matthew'}
             >>> request = TestRequest(**shib_headers)
             >>> self.shib._ShibbolethHelper__extract_shib_data(request)
-            {'HTTP_SHIB_IDENTITY_PROVIDER': 'https://globus-matthew.hpc.jcu.edu.au/shibboleth', \
-              'HTTP_MAX_FORWARDS': '10', \
-              'HTTP_COOKIE': '_saml_idp=aHR0cHM6Ly9nbG9idXMtbWF0dGhldy5ocGMuamN1LmVkdS5hdS9zaGliYm9sZXRo; _shibstate_5dc97d035cb931c8123d34c999e481deb8e5204c=https%3A%2F%2Fglobus-matthew.hpc.jcu.edu.au%2Fmattotea%2Facl_users%2Fshib%2Flogin; _shibsession_5dc97d035cb931c8123d34c999e481deb8e5204c=_44847aa19938b0ff3dbb0505b50f7251; _ZopeId="59459141A3fUP2UyaZk"', \
-              'HTTP_ACCEPT_LANGUAGE': 'en-au,en;q=0.5', \
-              'HTTP_SHIB_APPLICATION_ID': 'default', \
-              'HTTP_X_FORWARDED_SERVER': 'globus-matthew.hpc.jcu.edu.au', \
-              'HTTP_ACCEPT_CHARSET': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7', \
-              'HTTP_USER_AGENT': 'Mozilla/5.0 (X11; U; Linux i686; en; rv:1.9.0.1) Gecko/20080528 Epiphany/2.22 Firefox/3.0', \
-              'HTTP_REFERER': 'https://globus-matthew.hpc.jcu.edu.au/mattotea', \
-              'HTTP_SHIB_PERSON_SURNAME': 'Morgan', \
-              'HTTP_SHIB_INETORGPERSON_GIVENNAME': 'Matthew', \
-              'HTTP_SHIB_EP_UNSCOPEDAFFILIATION': 'member;student', \
-              'HTTP_VIA': '1.1 globus-matthew.hpc.jcu.edu.au', \
-              'HTTP_HOST': 'localhost:8380', \
-              'HTTP_SHIB_ORIGIN_SITE': 'https://globus-matthew.hpc.jcu.edu.au/shibboleth', \
-              'HTTP_SHIB_AUTHENTICATION_METHOD': 'urn:oasis:names:tc:SAML:1.0:am:unspecified', \
-              'HTTP_ACCEPT': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', \
-              'HTTP_SHIB_PERSON_COMMONNAME': 'Matthew Morgan', \
-              'HTTP_X_FORWARDED_FOR': '137.219.45.217', \
-              'HTTP_X_FORWARDED_HOST': 'globus-matthew.hpc.jcu.edu.au', \
-              'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', \
-              'login': u'_44847aa19938b0ff3dbb0505b50f7251', \
-              'HTTP_ACCEPT_ENCODING': 'gzip,deflate'}
-
+              ('matthew', \
+              {u'HTTP_SHIB_PERSON_COMMONNAME': 'Matthew Morgan', \
+              u'HTTP_SHIB_IDENTITY_PROVIDER': 'https://globus-matthew.hpc.jcu.edu.au/shibboleth', \
+              u'HTTP_REMOTE_USER': 'matthew', \
+              u'HTTP_SHIB_PERSON_SURNAME': 'Morgan', \
+              u'HTTP_SHIB_APPLICATION_ID': 'default', \
+              u'HTTP_SHIB_INETORGPERSON_GIVENNAME': 'Matthew', \
+              u'HTTP_SHIB_EP_UNSCOPEDAFFILIATION': 'member;student', \
+              u'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', \
+              u'HTTP_SHIB_ORIGIN_SITE': 'https://globus-matthew.hpc.jcu.edu.au/shibboleth', \
+              u'HTTP_SHIB_AUTHENTICATION_METHOD': 'urn:oasis:names:tc:SAML:1.0:am:unspecified'})
         """
-        toRet={}
-        keys = request.keys()
-        for key in keys:
-            if key.startswith("HTTP_"):
-                toRet[key] = request[key];
-        #toRet["login"] = request['HTTP_SHIB_PERSON_UID']
+        attributes={}
+
+        for k in self.getPossibleAttributes():
+            v = request.get(k, None)
+            if v:
+                attributes[k] = v
+
         uid_attr = self.getProperty('userid_attribute')
-        if uid_attr.strip().__len__() > 0:
+        if uid_attr.strip():
              if not (uid_attr in request.keys()):
-                  toRet["login"] = self.__getShibbolethSessionId(request)
-                  self.log(INFO, "User UID not supplied using handle: %s, from provider: %s."%(toRet["login"], request[self.getProperty(Constants.idp_identifier_attribute)]))
+                  id = str(self.__getShibbolethSessionId(request))
+                  log.debug("User UID not supplied using handle: %s, from provider: %s." % (id, request[self.getProperty(Constants.idp_identifier_attribute)]))
              else:
-                  self.log(INFO, 'Login: %s, %s'%(uid_attr,request[uid_attr]))
-                  toRet["login"] = request[uid_attr]
+                  log.debug('id: %s, %s' % (uid_attr,request[uid_attr]))
+                  id = request[uid_attr]
         else:
-            self.log(ERROR, "%s property is not set to anything."%('userid_attribute',))
-        self.log(INFO, "Extracted Values: %s"%str(toRet))
-        return toRet
+            log.error("%s property is not set to anything." % 'userid_attribute')
+        log.info("Extracted Values: %s" % str(attributes))
+        return id, attributes
 
 
     security.declarePrivate('__getShibbolethSessionId')
@@ -502,7 +493,7 @@ class ShibbolethHelper(BasePlugin):
             ...     cookies[c[0].strip()] = unicode(c[1])
             >>> self.app.acl_users.shib.REQUEST.environ.update(shib_headers)
             >>> self.shib._ShibbolethHelper__getShibbolethSessionId(self.shib.REQUEST)
-            u'_44847aa19938b0ff3dbb0505b50f7251'
+            '_44847aa19938b0ff3dbb0505b50f7251'
 
             >>> from zope.publisher.browser import TestRequest
             >>> shib_headers = {'HTTP_COOKIE': '_saml_idp=aHR0cHM6Ly9nbG9idXMtbWF0dGhldy5ocGMuamN1LmVkdS5hdS9zaGliYm9sZXRo; \
@@ -511,12 +502,12 @@ class ShibbolethHelper(BasePlugin):
               _ZopeId="59459141A3fUP2UyaZk"'}
             >>> request = TestRequest(**shib_headers)
             >>> self.shib._ShibbolethHelper__getShibbolethSessionId(request)
-            u'_44847aa19938b0ff3dbb0505b50f7251'
+            '_44847aa19938b0ff3dbb0505b50f7251'
         """
         for key in request.cookies.keys():
-                if key.startswith("_shibsession_"):
-                        self.log(DEBUG, "__getShibbolethSessionId: %s" % request.cookies[key])
-                        return request.cookies[key]
+            if key.startswith("_shibsession_"):
+                log.debug("__getShibbolethSessionId: %s" % request.cookies[key])
+                return str(request.cookies[key])
         return None
 
 #    security.declarePrivate('__validShibSession')
@@ -554,16 +545,14 @@ class ShibbolethHelper(BasePlugin):
             False
 
             >>> request.SESSION = self.app.session_data_manager.getSessionData()
-            >>> request.SESSION['session_id'] = u'_44847aa19938b0ff3dbb0505b50f7251'
+            >>> request.SESSION['shibboleth.session'] = '_44847aa19938b0ff3dbb0505b50f7251'
             >>> self.shib._ShibbolethHelper__validShibSession(request)
             True
         """
 
         sesid = self.__getShibbolethSessionId(request)
-        if request.SESSION.has_key(Constants.session_id):
-            #self.log(INFO, request.SESSION[Constants.session_id])
-            #self.log(INFO, request.SESSION[Constants.session_id] == sesid)
-            return  request.SESSION[Constants.session_id] == sesid
+        if request.SESSION.has_key('shibboleth.session'):
+            return  request.SESSION['shibboleth.session'] == sesid
         return False
 
 
@@ -606,20 +595,16 @@ class ShibbolethHelper(BasePlugin):
 
 
     security.declarePrivate('__caculateMapping')
-    def __caculateMapping(self, request, funcs):
-        self.log(DEBUG, "__caculateMapping: %s, %s" % (request, funcs))
+    def __caculateMapping(self, principal, funcs):
+        self.log(DEBUG, "__caculateMapping: %s, %s" % (principal, funcs))
         toRet = []
-        sesid = self.__getShibbolethSessionId(request)
-        session = self.REQUEST.SESSION
-        if not sesid: return tuple()
-        if not session.has_key(sesid): return tuple()
-        attrs = session[sesid]
+        attrs = self.store.get(principal, {})
         assign_targets = funcs
         for role in assign_targets:
           try:
               if assign_targets[role](attrs): toRet.append(role)
           except Exception, e:
-              self.log(INFO, "Error occoured whilst assiging target: %s"%role)
+              self.log(INFO,"Error occoured whilst assiging target: %s" % role)
         self.log(DEBUG, "__caculateMapping: %s" % toRet)
         return tuple(toRet)
 
