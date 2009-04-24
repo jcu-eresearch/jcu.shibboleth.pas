@@ -1,2 +1,4 @@
 Nigel Bajema, Author
 
+Pluggable Auth Service Contributors (ZODBUserFolder and CookieAuthHelper specifically)
+

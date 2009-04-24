@@ -1,4 +1,13 @@
-1.0 (xxxx-xx-xx)
+1.1 (2008-08-25)
 ==================
+ - Created internal user store [Russell Sim]
+ - Updated interfaces to only require arguments passed in and not assumed arguments like REQUEST [Russell Sim].
+ - Created BrowserViews, moved functions into view classes [Russell Sim].
+ - Added unit tests to most functions [Russell Sim].
+ - Added intergration tests to simulate Shibboleth logins without needing an SP [Russell Sim].
+ - Created recipe with ZopeSkel [Russell Sim].
 
- - Created recipe with ZopeSkel [Nigel Bajema].
+1.0 (2007-07-31)
+==================
+ - Removed dependency on shibtarget C bindings [Nigel Bajema].
+ - Initial implementation released [Nigel Bajema].

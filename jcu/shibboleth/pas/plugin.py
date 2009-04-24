@@ -148,11 +148,11 @@ class ShibbolethHelper(BasePlugin):
             return None
 
         if credentials['shibboleth.id'] == credentials['shibboleth.session']:
-            login = "Pseudo-Anonymous: %s" % shibSessionId
+            login = "Pseudo-Anonymous: %s" % credentials['shibboleth.id']
             return (self.prefix + shibsession, login)
 
         login = credentials.get('shibboleth.id')
-        return (login, login)
+        return (self.prefix + login, login)
 
 
     #
