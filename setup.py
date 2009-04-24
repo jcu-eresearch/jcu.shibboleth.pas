@@ -21,7 +21,8 @@ long_description = (
     'Detailed Documentation\n'
     '**********************\n'
     + '\n' +
-    read('jcu',
+    read('src',
+         'jcu',
          'shibboleth',
          'pas', 'README.txt')
     + '\n' +
@@ -52,7 +53,8 @@ setup(name='jcu.shibboleth.pas',
       author_email='nigel.bajema@jcu.edu.au',
       url='http://www.hpc.jcu.edu.au/git/?p=jc136727/jcu.shibboleth.plone.git;a=summary',
       license='GPL',
-      packages=find_packages(exclude=['ez_setup']),
+      packages=find_packages('src', exclude=['ez_setup']),
+      package_dir={'':'src'},
       namespace_packages=['jcu', 'jcu.shibboleth'],
       include_package_data=True,
       zip_safe=False,
