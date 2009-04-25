@@ -1,26 +1,22 @@
 '''Class: PasHelper
 '''
-
-from os import path
 import copy
+import logging, StringIO, traceback, re, pickle, base64, md5
+import sys
+from logging import DEBUG, ERROR, INFO
+from os import path
+
+import Constants as Constants
+import interface
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from App.class_init import default__class_init__ as InitializeClass
-
 from Products.PluggableAuthService.interfaces.plugins import IRoleEnumerationPlugin
-from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
-from Products.PluggableAuthService.utils import classImplements
 from Products.PluggableAuthService.permissions import ManageUsers
+from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
 from Products.PluggableAuthService.plugins.ZODBUserManager import _ZODBUserFilter
-
-from ConstantsPageTemplateFile import mypt
-import Constants as Constants
-
-from logging import  DEBUG, ERROR, INFO, WARNING, CRITICAL, FATAL
-import logging, StringIO, traceback, re, pickle, base64, md5
-
+from Products.PluggableAuthService.utils import classImplements
 from persistent.mapping import PersistentMapping
-import interface
-import plugins
+
 
 log = logging.getLogger("jcu.shibboleth.pas")
 
