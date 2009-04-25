@@ -39,6 +39,7 @@ class TestCase(ZopeTestCase.Functional, ZopeTestCase.ZopeTestCase):
             plugins.activatePlugin(IGroupsPlugin, 'groups')
             plugins.activatePlugin(IGroupEnumerationPlugin, 'groups')
 
+        zcml.load_site()
         installPackage('jcu.shibboleth.pas')
 
         # Add the session objects
