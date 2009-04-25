@@ -954,51 +954,65 @@ class ShibbolethHelper(BasePlugin):
     #
     # Shibboleth XML file reader
     #
-    def configfileExists(self):
+    def configFile(self):
         """
-        Return true if the AAP.xml config file exists.
-        This is a prereq for getPossibleAttributes.
-            >>> self.app.acl_users.shib.configfileExists()
-            True
+        Return a tuple containing the location and the search path for the
+        attributes.
+            >>> self.app.acl_users.shib.configFile()
+            (... 'AttributeRule/@Header')
+            >>> path = self.uf.shib.getProperty('Shibboleth_Config_Dir')
+            >>> from os import sep
+            >>> swollow = self.uf.shib.manage_changeProperties({"Shibboleth_Config_Dir":path + sep +  'shib2'})
+            >>> self.app.acl_users.shib.configFile()
+            (... 'Attribute/@id')
         """
-        return path.exists(path.join(self.getProperty(Constants.shib_config_dir), "AAP.xml"))
+        dir = self.getProperty(Constants.shib_config_dir)
+        if path.exists(path.join(dir, "AAP.xml")):
+            shib1 = [u'HTTP_SHIB_APPLICATION_ID', u'HTTP_SHIB_PERSON_MAIL',
+                     u'HTTP_SHIB_AUTHENTICATION_METHOD', u'HTTP_SHIB_ORIGIN_SITE',
+                     u'HTTP_SHIB_IDENTITY_PROVIDER']
+            return (path.join(dir, "AAP.xml"), shib1, 'AttributeRule/@Header')
+        if path.exists(path.join(dir, "attribute-map.xml")):
+            shib2 = [u'HTTP_REMOTE_USER', u'HTTP_SHIB_PERSON_MAIL',
+                     u'HTTP_SHIB_AUTHENTICATION_INSTANT', u'HTTP_SHIB_APPLICATION_ID',
+                     u'HTTP_SHIB_AUTHNCONTEXT_CLASS', u'HTTP_SHIB_AUTHNCONTEXT_DECL']
+            return (path.join(dir, "attribute-map.xml"), shib2, 'Attribute/@id')
+        return False
 
-    def getPossibleAttributes(self, file=None):
+    def getPossibleAttributes(self):
         """
         Return the possible shibboleth attributes which are found in the AAP xml file
 
-            >>> Attributes = [u'HTTP_SHIB_EP_AFFILIATION', \
-              u'HTTP_SHIB_EP_UNSCOPEDAFFILIATION', u'HTTP_REMOTE_USER', u'HTTP_SHIB_EP_ENTITLEMENT', \
-              u'HTTP_SHIB_TARGETEDID', u'HTTP_SHIB_EP_PRIMARYAFFILIATION', \
-              u'HTTP_SHIB_EP_PRIMARYORGUNITDN', u'HTTP_SHIB_EP_ORGUNITDN', u'HTTP_SHIB_EP_ORGDN', \
-              u'HTTP_SHIB_PERSON_COMMONNAME', u'HTTP_SHIB_PERSON_SURNAME', u'HTTP_SHIB_INETORGPERSON_MAIL', \
-              u'HTTP_SHIB_PERSON_TELEPHONENUMBER', u'HTTP_SHIB_ORGPERSON_TITLE', u'HTTP_SHIB_INETORGPERSON_INITIALS', \
-              u'HTTP_SHIB_PERSON_DESCRIPTION', u'HTTP_SHIB_INETORGPERSON_CARLICENSE', \
-              u'HTTP_SHIB_INETORGPERSON_DEPTNUM', u'HTTP_SHIB_INETORGPERSON_DISPLAYNAME', \
-              u'HTTP_SHIB_INETORGPERSON_EMPLOYEENUM', u'HTTP_SHIB_INETORGPERSON_EMPLOYEETYPE', \
-              u'HTTP_SHIB_INETORGPERSON_PREFLANG', u'HTTP_SHIB_INETORGPERSON_MANAGER', u'HTTP_SHIB_INETORGPERSON_ROOMNUM', \
-              u'HTTP_SHIB_ORGPERSON_SEEALSO', u'HTTP_SHIB_ORGPERSON_FAX', u'HTTP_SHIB_ORGPERSON_STREET', \
-              u'HTTP_SHIB_ORGPERSON_POBOX', u'HTTP_SHIB_ORGPERSON_POSTALCODE', u'HTTP_SHIB_ORGPERSON_STATE', \
-              u'HTTP_SHIB_INETORGPERSON_GIVENNAME', u'HTTP_SHIB_ORGPERSON_LOCALITY', \
-              u'HTTP_SHIB_INETORGPERSON_BUSINESSCAT', u'HTTP_SHIB_ORGPERSON_ORGUNIT', u'HTTP_SHIB_ORGPERSON_OFFICENAME', \
-              u'HTTP_SHIB_IDENTITY_PROVIDER', u'HTTP_SHIB_ORIGIN_SITE', u'HTTP_SHIB_AUTHENTICATION_METHOD']
+            >>> Attributes = [u'HTTP_SHIB_APPLICATION_ID', \
+                              u'HTTP_SHIB_PERSON_MAIL']
+            >>> len(self.uf.shib.getPossibleAttributes()) == 40
+            True
+            >>> for a in Attributes:
+            ...     if a in self.uf.shib.getPossibleAttributes():
+            ...         continue
+            ...     print "Missing Attribute %s" % a
+            >>> path = self.uf.shib.getProperty('Shibboleth_Config_Dir')
+            >>> from os import sep
+            >>> swollow = self.uf.shib.manage_changeProperties({"Shibboleth_Config_Dir":path + sep +  'shib2'})
             >>> for a in Attributes:
             ...     if a in self.uf.shib.getPossibleAttributes():
             ...         continue
             ...     print "Missing Attribute %s" % a
 
         """
+        # TODO should exit cleanly if it can't find the config file, currently causes server error when called from extractshibHeaders function
         from xml.dom.ext.reader import Sax2
         from xml import xpath
         #TODO Should read the shibboleth.xml to figureout where the AAP is
-        #doc = Sax2.Reader().fromStream(open(self.getProperty(Constants.shib_config_dir)))
-        #AAPConf = xpath.Evaluate('/SPConfig/Applications/AAPProvider/@uri', doc.documentElement)[0]
-        #file = AAPConf._get_value()
-        if not file:
-            file = path.join(self.getProperty(Constants.shib_config_dir), "AAP.xml")
-        doc = Sax2.Reader().fromStream(open(file))
-        nodes = [n for n in xpath.Evaluate('AttributeRule/@Header', doc.documentElement)]
-        attributes = list(set(['HTTP_' + n._get_value().upper().replace('-','_') for n in nodes])) + [u'HTTP_SHIB_AUTHENTICATION_METHOD', u'HTTP_SHIB_ORIGIN_SITE',  u'HTTP_SHIB_IDENTITY_PROVIDER']
+        try:
+            filename, extra_attributes, attribute_path = self.configFile()
+        except TypeError:
+            return []
+        doc = Sax2.Reader().fromStream(open(filename))
+        nodes = [n for n in xpath.Evaluate(attribute_path, doc.documentElement)]
+        # TODO the following attributes are missing for an unknown reason
+        attributes = list(set(['HTTP_' + n._get_value().upper().replace('-','_')
+                               for n in nodes])) + extra_attributes
         attributes.sort()
         return attributes
 

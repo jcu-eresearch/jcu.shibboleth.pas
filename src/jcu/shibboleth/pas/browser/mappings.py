@@ -53,7 +53,9 @@ class roleMappingsView(BrowserView):
             >>> self.rmv.configfileExists()
             True
         """
-        return self.context.configfileExists()
+        if self.context.configFile():
+            return True
+        return False
 
     def getPossibleAttributes(self):
         return self.context.getPossibleAttributes()
