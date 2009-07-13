@@ -129,9 +129,9 @@ class ShibbolethHelper(BasePlugin):
 
         shibsession = credentials.get('shibboleth.session')
         log.debug('Authentication Requested.')
-        url = "%s/%s"%(self.absolute_url(), self.__login_location)
+        url = "%s/%s" % (self.absolute_url(), self.__login_location)
         request = self.REQUEST
-        log.debug("URLS: %s, %s"%(request.URL, url))
+        log.debug("URLS: %s, %s" % (request.URL, url))
         if request.URL == url:
             log.debug("Not attempting to authenticate login request.")
             return None
@@ -162,7 +162,7 @@ class ShibbolethHelper(BasePlugin):
         resp = req['RESPONSE']
 
         self.log(INFO, "Challange.")
-        url = "%s/%s"%(self.absolute_url(), self.__login_location)
+        url = "%s/%s" % (self.absolute_url(), self.__login_location)
         came_from = req.get('URL', '')
         query = req.get('QUERY_STRING')
         if query:
@@ -172,16 +172,16 @@ class ShibbolethHelper(BasePlugin):
 
         shibSessionId = self.__getShibbolethSessionId(request)
         if not shibSessionId:
-                resp.redirect("%s?came_from=%s"%(url, came_from), lock=1)
-                return True
+            resp.redirect("%s?came_from=%s" % (url, came_from), lock=1)
+            return True
 
         if not self.__validShibSession(request):
-                self.log(INFO, "Not a valid Request")
-                resp.redirect("%s?came_from=%s"%(url, came_from))
+            self.log(INFO, "Not a valid Request")
+            resp.redirect("%s?came_from=%s" % (url, came_from))
 
         session = self.REQUEST.SESSION
         if shibSessionId and not session.has_key(shibSessionId):
-           resp.redirect("%s?came_from=%s"%(url, came_from))
+            resp.redirect("%s?came_from=%s" % (url, came_from))
 
         return True
 
@@ -367,7 +367,7 @@ class ShibbolethHelper(BasePlugin):
         self.store[id] = attributes
         session['shibboleth.id'] = id
         if not came_from:
-            self.log(INFO, "came_from  not specified, using: %s"%request.BASE2)
+            self.log(INFO, "came_from  not specified, using: %s" % request.BASE2)
             came_from = request.BASE2+"/login_form?form.submitted=1"
         return response.redirect(came_from)
 
@@ -632,7 +632,9 @@ class ShibbolethHelper(BasePlugin):
             return False
 
         def del_item(REQUEST, map):
-            self.log(DEBUG, "Deleting %s %s."%(REQUEST.form[Constants.mapping], REQUEST.form[Constants.mapping_item]))
+            self.log(DEBUG, "Deleting %s %s." %
+                     (REQUEST.form[Constants.mapping],
+                      REQUEST.form[Constants.mapping_item]))
             map.__delitem__(REQUEST.form[Constants.mapping_item])
             return False
 
@@ -683,15 +685,15 @@ class ShibbolethHelper(BasePlugin):
             to_export = REQUEST.form[Constants.mapping]
             response = REQUEST.RESPONSE
             response.setHeader('Content-Type','application/octet-stream')
-            response.setHeader('Content-Disposition', 'attachment; filename=%s.b64'%to_export)
+            response.setHeader('Content-Disposition', 'attachment; filename=%s.b64' % to_export)
             response.setBody(base64.encodestring(pickle.dumps([to_export, map, hasher.hexdigest()])))
             return True
 
         def import_mapping(REQUEST, map):
             form = REQUEST.form
             def doRedr(message):
-                uri = "%s?%s=%s"%(REQUEST['HTTP_REFERER'].split("?")[0],Constants.message_element, message)
-                self.log(INFO, "URI: %s"%uri)
+                uri = "%s?%s=%s" % (REQUEST['HTTP_REFERER'].split("?")[0],Constants.message_element, message)
+                self.log(INFO, "URI: %s" % uri)
                 return REQUEST.RESPONSE.redirect(uri)
 
             #Decode the data.
@@ -847,11 +849,11 @@ class ShibbolethHelper(BasePlugin):
 
                 #Create the expression for a single line.
                 lines.append( (item[Constants.OBPos]*'(') +
-                    Constants.EXP_CODE[item[Constants.OTPos]]%{'1': (item[Constants.SVNPos].__repr__()),
+                    Constants.EXP_CODE[item[Constants.OTPos]] % {'1': (item[Constants.SVNPos].__repr__()),
                     '2':value} + ""+ (item[Constants.CBPos]*')'))
 
                 #Create the boolean expressions betweens the lines.
-                if(i < (map.__len__()-1)): expression = Constants.BOOL_CODE[item[Constants.BOTPos]]%(expression, '%s')
+                if(i < (map.__len__()-1)): expression = Constants.BOOL_CODE[item[Constants.BOTPos]] % (expression, '%s')
 
                 #Gather the regular expression patterns for validation later.
                 if item[Constants.OTPos] in Constants.REGEX_EXP:
@@ -859,7 +861,7 @@ class ShibbolethHelper(BasePlugin):
                    regex.append(value)
 
             #Merge the lines with the boolean expression.
-            code += expression%tuple(lines)
+            code += expression % tuple(lines)
 
         code +=": return True\n  return False\n"
 
@@ -883,8 +885,8 @@ class ShibbolethHelper(BasePlugin):
             f = StringIO.StringIO()
             traceback.print_exc(file=f)
             regex_error += '*' * 50
-            regex_error += '\n%s\n%s'%("Pattern: %s"%expr[1:-1],f.getvalue())
-        self.log(DEBUG, "Errors?: %s"%regex_compile_error)
+            regex_error += '\n%s\n%s' % ("Pattern: %s" % expr[1:-1],f.getvalue())
+        self.log(DEBUG, "Errors?: %s" % regex_compile_error)
         if regex_compile_error:
            return (regex_error, code, None)
 
