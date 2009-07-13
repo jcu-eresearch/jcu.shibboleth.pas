@@ -60,6 +60,7 @@ setup(name='jcu.shibboleth.pas',
       zip_safe=False,
       install_requires=['setuptools',
                         'zope.schema',
+                        'pyxml',
                         # -*- Extra requirements: -*-
                         ],
       tests_require=tests_require,
