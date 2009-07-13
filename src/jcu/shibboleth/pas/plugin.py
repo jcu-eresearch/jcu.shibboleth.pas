@@ -114,7 +114,7 @@ class ShibbolethHelper(BasePlugin):
     def __setup_compiled_func_map(self):
         self._v_compiled_mapping_func_map = {}
         for i in self._mapping_map:
-             self._v_compiled_mapping_func_map[i] = {}
+            self._v_compiled_mapping_func_map[i] = {}
 
     #
     #   IAuthenticationPlugin implementation
@@ -225,7 +225,7 @@ class ShibbolethHelper(BasePlugin):
         """
         self.log(INFO, "Principal: %s"%principal)
         if not hasattr(self,'_v_compiled_mapping_func_map'):
-           self.__compileMappings()
+            self.__compileMappings()
         return self.__caculateMapping(principal.getId(), self._v_compiled_mapping_func_map[Constants.RoleM])
 
 
@@ -248,7 +248,7 @@ class ShibbolethHelper(BasePlugin):
             ()
         """
         if not hasattr(self,'_v_compiled_mapping_func_map'):
-           self.__compileMappings()
+            self.__compileMappings()
         return self.__caculateMapping(principal.getId(), self._v_compiled_mapping_func_map[Constants.GroupM])
 
 
@@ -482,12 +482,12 @@ class ShibbolethHelper(BasePlugin):
 
         uid_attr = self.getProperty('userid_attribute')
         if uid_attr.strip():
-             if not (uid_attr in request.keys()):
-                  id = str(self.__getShibbolethSessionId(request))
-                  log.debug("User UID not supplied using handle: %s, from provider: %s." % (id, request[self.getProperty(Constants.idp_identifier_attribute)]))
-             else:
-                  log.debug('id: %s, %s' % (uid_attr,request[uid_attr]))
-                  id = request[uid_attr]
+            if not (uid_attr in request.keys()):
+                id = str(self.__getShibbolethSessionId(request))
+                log.debug("User UID not supplied using handle: %s, from provider: %s." % (id, request[self.getProperty(Constants.idp_identifier_attribute)]))
+            else:
+                log.debug('id: %s, %s' % (uid_attr, request[uid_attr]))
+                id = request[uid_attr]
         else:
             log.error("%s property is not set to anything." % 'userid_attribute')
         log.info("Extracted Values: %s" % str(attributes))
@@ -617,10 +617,10 @@ class ShibbolethHelper(BasePlugin):
         attrs = self.store.get(principal, {})
         assign_targets = funcs
         for role in assign_targets:
-          try:
-              if assign_targets[role](attrs): toRet.append(role)
-          except Exception, e:
-              self.log(INFO,"Error occoured whilst assiging target: %s" % role)
+            try:
+                if assign_targets[role](attrs): toRet.append(role)
+            except Exception, e:
+                self.log(INFO,"Error occoured whilst assiging target: %s" % role)
         self.log(DEBUG, "__caculateMapping: %s" % toRet)
         return tuple(toRet)
 
@@ -645,25 +645,25 @@ class ShibbolethHelper(BasePlugin):
             #Saves the current state.
             for x in form:
                 if x.startswith(Constants.opening_bracket_element):
-                     role[int(x.split(':')[1])][Constants.OBPos] = int(form[x])
+                    role[int(x.split(':')[1])][Constants.OBPos] = int(form[x])
                 elif x.startswith(Constants.closing_bracket_element):
-                     role[int(x.split(':')[1])][Constants.CBPos] = int(form[x])
+                    role[int(x.split(':')[1])][Constants.CBPos] = int(form[x])
                 elif x.startswith(Constants.op_type_value_element):
-                     role[int(x.split(':')[1])][Constants.OTPos] = int(form[x])
+                    role[int(x.split(':')[1])][Constants.OTPos] = int(form[x])
                 elif x.startswith(Constants.bool_row_op_element):
-                     role[int(x.split(':')[1])][Constants.BOTPos] = int(form[x])
+                    role[int(x.split(':')[1])][Constants.BOTPos] = int(form[x])
                 elif x.startswith(Constants.var_name_element):
-                     role[int(x.split(':')[1])][Constants.SVNPos] = form[x]
+                    role[int(x.split(':')[1])][Constants.SVNPos] = form[x]
                 elif x.startswith(Constants.var_value_element):
-                     role[int(x.split(':')[1])][Constants.SVVPos] = form[x]
+                    role[int(x.split(':')[1])][Constants.SVVPos] = form[x]
 
             #Remove deleted items.
             if form.has_key(Constants.del_row_element):
                 toDel = form[Constants.del_row_element]
                 if not isinstance(toDel, list):
-                   toDel = [toDel]
+                    toDel = [toDel]
                 for i in toDel:
-                   role[int(i)] = None
+                    role[int(i)] = None
                 while None in role: role.remove(None)
 
             #Add new rows.
@@ -762,9 +762,9 @@ class ShibbolethHelper(BasePlugin):
         """
         if self._op_switch is None: self.__setup_op_switch()
         if self._mapping_map.has_key(mapping):
-                map = self._mapping_map[mapping]
+            map = self._mapping_map[mapping]
         else:
-                map = None
+            map = None
         if REQUEST:
             if self._op_switch.has_key(op_type):
                 if not self._op_switch[op_type](REQUEST, map):
@@ -808,7 +808,7 @@ class ShibbolethHelper(BasePlugin):
         """
         self.log(DEBUG, "__compileMappings")
         if not hasattr(self,'_v_compiled_mapping_func_map'):
-           self.__setup_compiled_func_map()
+            self.__setup_compiled_func_map()
         for mapping in self._mapping_map:
             self.log(DEBUG, "__compileMappings: MAPPING %s" % mapping)
             for item in self._mapping_map[mapping]:
@@ -842,10 +842,10 @@ class ShibbolethHelper(BasePlugin):
                 #Determin if the value is numerical or a string.
                 #Is this step nessecary? Will there ever be a numerical value here?
                 try:
-                   float(item[Constants.SVVPos])
-                   value = item[Constants.SVVPos]
+                    float(item[Constants.SVVPos])
+                    value = item[Constants.SVVPos]
                 except ValueError, e:
-                      value = str((item[Constants.SVVPos]).decode('unicode-escape', 'ignore')).__repr__()
+                    value = str((item[Constants.SVVPos]).decode('unicode-escape', 'ignore')).__repr__()
 
                 #Create the expression for a single line.
                 lines.append( (item[Constants.OBPos]*'(') +
@@ -857,8 +857,8 @@ class ShibbolethHelper(BasePlugin):
 
                 #Gather the regular expression patterns for validation later.
                 if item[Constants.OTPos] in Constants.REGEX_EXP:
-                   self.log(DEBUG, "Pattern: "+(str(value)[1:-1]))
-                   regex.append(value)
+                    self.log(DEBUG, "Pattern: "+(str(value)[1:-1]))
+                    regex.append(value)
 
             #Merge the lines with the boolean expression.
             code += expression % tuple(lines)
