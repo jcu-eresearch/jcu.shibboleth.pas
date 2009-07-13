@@ -2,7 +2,6 @@
 '''
 import copy
 import logging, StringIO, traceback, re, pickle, base64, md5
-import sys
 from logging import DEBUG, ERROR, INFO
 from os import path
 
@@ -878,17 +877,17 @@ class ShibbolethHelper(BasePlugin):
         regex_error = ''
         regex_compile_error = False
         for expr in regex:
-          try:
-            re.compile(expr[1:-1])
-          except Exception, e:
-            regex_compile_error = True
-            f = StringIO.StringIO()
-            traceback.print_exc(file=f)
-            regex_error += '*' * 50
-            regex_error += '\n%s\n%s' % ("Pattern: %s" % expr[1:-1],f.getvalue())
+            try:
+                re.compile(expr[1:-1])
+            except Exception, e:
+                regex_compile_error = True
+                f = StringIO.StringIO()
+                traceback.print_exc(file=f)
+                regex_error += '*' * 50
+                regex_error += '\n%s\n%s' % ("Pattern: %s" % expr[1:-1],f.getvalue())
         self.log(DEBUG, "Errors?: %s" % regex_compile_error)
         if regex_compile_error:
-           return (regex_error, code, None)
+            return (regex_error, code, None)
 
         self.log(DEBUG, "__compileItem: %s, %s, %s" % (None, code, assign_target))
         return (None, code, assign_target)
