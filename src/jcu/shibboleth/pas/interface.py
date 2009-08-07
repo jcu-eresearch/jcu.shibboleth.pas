@@ -11,6 +11,8 @@ from Products.PluggableAuthService.interfaces.plugins import \
         IGroupsPlugin
 from Products.PluggableAuthService.interfaces.plugins import \
         IUserEnumerationPlugin
+from Products.PluggableAuthService.interfaces.plugins import \
+        IPropertiesPlugin
 
 
 class IShibbolethHelper (IAuthenticationPlugin,
@@ -19,6 +21,7 @@ class IShibbolethHelper (IAuthenticationPlugin,
 #       IUserFactoryPlugin,
         IUserEnumerationPlugin,
         IChallengePlugin,
+        IPropertiesPlugin,
         ILoginPasswordExtractionPlugin ):
     """interface for PasShibboleth
     """

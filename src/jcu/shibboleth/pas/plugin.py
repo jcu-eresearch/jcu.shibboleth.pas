@@ -14,6 +14,7 @@ from Products.PluggableAuthService.permissions import ManageUsers
 from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
 from Products.PluggableAuthService.plugins.ZODBUserManager import _ZODBUserFilter
 from Products.PluggableAuthService.utils import classImplements
+from Products.PluggableAuthService.UserPropertySheet import UserPropertySheet
 from persistent.mapping import PersistentMapping
 
 
@@ -306,6 +307,34 @@ class ShibbolethHelper(BasePlugin):
                     user_info.append(info)
 
         return tuple(user_info)
+
+
+    #
+    #   IPropertiesPlugin implementation
+    #
+    security.declarePrivate('getPropertiesForUser')
+    def getPropertiesForUser(self, user, request=None ):
+        """return the immutabel shibboleth properties of a user
+
+            >>> self.shib.store = {'matthew': {u'HTTP_SHIB_PERSON_COMMONNAME': 'Matthew Morgan', u'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', u'HTTP_REMOTE_USER': 'matthew', u'HTTP_SHIB_PERSON_SURNAME': 'Morgan'}}
+            >>> u = self.app.acl_users.getUser('matthew')
+            >>> u.listPropertysheets()
+            ['shib']
+            >>> prop = u.getPropertysheet('shib')
+            >>> print prop.propertyItems()
+            [('email', 'matthew.morgan@jcu.edu.au'), ('fullname', 'Matthew Morgan'), ('location', None)]
+        """
+        userdata = self.store.get(user.getId())
+        schema = [('email', 'string'),
+                  ('fullname', 'string'),
+                  ('location', 'string'),
+                 ]
+        mapping = {'HTTP_SHIB_PERSON_COMMONNAME': 'fullname',
+                   'HTTP_SHIB_PERSON_MAIL': 'email'}
+        data = {}
+        for k, v in mapping.items():
+            data[v] = userdata[k]
+        return UserPropertySheet(self.id, schema=schema, **data)
 
 
     security.declarePublic('login')
