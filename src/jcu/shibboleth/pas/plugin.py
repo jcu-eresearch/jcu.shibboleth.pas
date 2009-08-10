@@ -104,6 +104,13 @@ class ShibbolethHelper(BasePlugin):
         # Shibboleth attributes store
         self.store =  PersistentMapping()
 
+        # Shibboleth attributes map
+        self.attr_map = PersistentMapping()
+
+        # Default Values for attribute map
+        self.attr_map['HTTP_SHIB_PERSON_COMMONNAME'] = 'fullname'
+        self.attr_map['HTTP_SHIB_PERSON_MAIL'] = 'email'
+
         #Properties for the Property Manager.
         self.max_brackets = 6
         self.__dict__[Constants.user_cn_attribute] = Constants.default_user_cn_attribute_value
@@ -329,10 +336,8 @@ class ShibbolethHelper(BasePlugin):
                   ('fullname', 'string'),
                   ('location', 'string'),
                  ]
-        mapping = {'HTTP_SHIB_PERSON_COMMONNAME': 'fullname',
-                   'HTTP_SHIB_PERSON_MAIL': 'email'}
         data = {}
-        for k, v in mapping.items():
+        for k, v in self.attr_map.items():
             data[v] = userdata[k]
         return UserPropertySheet(self.id, schema=schema, **data)
 
