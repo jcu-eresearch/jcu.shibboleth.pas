@@ -323,6 +323,12 @@ class ShibbolethHelper(BasePlugin):
     def getPropertiesForUser(self, user, request=None ):
         """return the immutabel shibboleth properties of a user
 
+            >>> from Products.PluggableAuthService.interfaces.plugins import \
+                    IPropertiesPlugin, IUserEnumerationPlugin
+            >>> plugins = self.uf.plugins
+            >>> plugins.activatePlugin(IPropertiesPlugin, 'shib')
+            >>> plugins.activatePlugin(IUserEnumerationPlugin, 'shib')
+
             >>> self.shib.store = {'matthew': {u'HTTP_SHIB_PERSON_COMMONNAME': 'Matthew Morgan', u'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', u'HTTP_REMOTE_USER': 'matthew', u'HTTP_SHIB_PERSON_SURNAME': 'Morgan'}}
             >>> u = self.app.acl_users.getUser('matthew')
             >>> u.listPropertysheets()
