@@ -52,7 +52,7 @@ class TestCase(ZopeTestCase.Functional, ZopeTestCase.ZopeTestCase):
             plugins.activatePlugin(IChallengePlugin, 'basic_auth')
 
         zcml.load_site()
-        #zcml.load_config('configure.zcml', jcu.shibboleth.pas)
+        zcml.load_config('configure.zcml', jcu.shibboleth.pas)
         installPackage('jcu.shibboleth.pas')
 
         # Add the session objects
