@@ -343,6 +343,8 @@ class ShibbolethHelper(BasePlugin):
                   ('location', 'string'),
                  ]
         data = {}
+        if not userdata:
+            return None
         for k, v in self.attr_map.items():
             if userdata.has_key(k):
                 data[v] = userdata[k]
