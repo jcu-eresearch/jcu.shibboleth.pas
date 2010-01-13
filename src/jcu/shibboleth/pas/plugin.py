@@ -52,10 +52,6 @@ class ShibbolethHelper(BasePlugin):
                     'id': Constants.idp_identifier_attribute,
                     'type': 'string',
                     'mode': 'w',},
-                   {'label':'User Common Name Attribute',
-                    'id': Constants.user_cn_attribute,
-                    'type': 'string',
-                    'mode':'w'},
                    {'label':'User ID Attribute',
                     'id': 'userid_attribute',
                     'type': 'string',
@@ -80,8 +76,6 @@ class ShibbolethHelper(BasePlugin):
             6
             >>> newshib.getProperty('userid_attribute')
             'HTTP_REMOTE_USER'
-            >>> newshib.getProperty('User_Common_Name_Attribute')
-            'HTTP_SHIB_PERSON_COMMONNAME'
             >>> newshib.getProperty('IDP_Attribute')
             'HTTP_SHIB_IDENTITY_PROVIDER'
             >>> newshib.getProperty('Shibboleth_Config_Dir')
@@ -113,7 +107,6 @@ class ShibbolethHelper(BasePlugin):
 
         #Properties for the Property Manager.
         self.max_brackets = 6
-        self.__dict__[Constants.user_cn_attribute] = Constants.default_user_cn_attribute_value
         self.userid_attribute = 'HTTP_REMOTE_USER'
         self.__dict__[Constants.shib_config_dir] = Constants.default_shib_config_dir
         self.__dict__[Constants.idp_identifier_attribute] = Constants.default_idp_identifier_attribute_value

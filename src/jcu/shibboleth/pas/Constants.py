@@ -4,7 +4,6 @@ idp_identifier_attribute='IDP_Attribute'
 shib_config_dir='Shibboleth_Config_Dir'
 
 #Properties Valuet
-default_user_cn_attribute_value = 'HTTP_SHIB_PERSON_COMMONNAME'
 default_idp_identifier_attribute_value = 'HTTP_SHIB_IDENTITY_PROVIDER'
 default_shib_config_dir = '/etc/shibboleth'
 
