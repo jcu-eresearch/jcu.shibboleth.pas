@@ -410,9 +410,11 @@ class ShibbolethHelper(BasePlugin):
         session['shibboleth.session'] = session_id
 
         id, attributes = self.__extract_shib_data(request)
-        # Store the users attribute in the tool and in the users session
-        self.store[id] = attributes
         session['shibboleth.id'] = id
+        # if not Pseudo-Anonymous then store the users details
+        if not id == session_id:
+            # Store the users attribute in the tool and in the users session
+            self.store[id] = attributes
         if not came_from:
             self.log(INFO, "came_from  not specified, using: %s" % request.BASE2)
             came_from = request.BASE2+"/login_form?form.submitted=1"
