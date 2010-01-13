@@ -336,6 +336,13 @@ class ShibbolethHelper(BasePlugin):
             >>> prop = u.getPropertysheet('shib')
             >>> print prop.propertyItems()
             [('email', 'matthew.morgan@jcu.edu.au'), ('fullname', 'Matthew Morgan'), ('location', None)]
+
+            test missing shibboleth attribute
+
+            >>> self.shib.store = {'matthew': {u'HTTP_SHIB_PERSON_MAIL': 'matthew.morgan@jcu.edu.au', u'HTTP_REMOTE_USER': 'matthew', u'HTTP_SHIB_PERSON_SURNAME': 'Morgan'}}
+            >>> u = self.app.acl_users.getUser('matthew')
+            >>> u.listPropertysheets()
+            ['shib']
         """
         userdata = self.store.get(user.getId())
         schema = [('email', 'string'),
@@ -344,7 +351,8 @@ class ShibbolethHelper(BasePlugin):
                  ]
         data = {}
         for k, v in self.attr_map.items():
-            data[v] = userdata[k]
+            if userdata.has_key(k):
+                data[v] = userdata[k]
         return UserPropertySheet(self.id, schema=schema, **data)
 
 
