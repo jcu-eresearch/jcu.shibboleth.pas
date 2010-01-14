@@ -1,6 +1,5 @@
 '''Class: PasHelper
 '''
-import copy
 import logging, StringIO, traceback, re, pickle, base64, md5
 from logging import DEBUG, ERROR, INFO
 from os import path
@@ -12,10 +11,13 @@ from App.class_init import default__class_init__ as InitializeClass
 from Products.PluggableAuthService.interfaces.plugins import IRoleEnumerationPlugin
 from Products.PluggableAuthService.permissions import ManageUsers
 from Products.PluggableAuthService.plugins.BasePlugin import BasePlugin
-from Products.PluggableAuthService.plugins.ZODBUserManager import _ZODBUserFilter
 from Products.PluggableAuthService.utils import classImplements
 from Products.PluggableAuthService.UserPropertySheet import UserPropertySheet
 from persistent.mapping import PersistentMapping
+
+
+def isStringType(data):
+    return isinstance(data, str) or isinstance(data, unicode)
 
 
 log = logging.getLogger("jcu.shibboleth.pas")
@@ -100,10 +102,13 @@ class ShibbolethHelper(BasePlugin):
 
         # Shibboleth attributes map
         self.attr_map = PersistentMapping()
+        self.rattr_map = PersistentMapping()
 
         # Default Values for attribute map
         self.attr_map['HTTP_SHIB_PERSON_COMMONNAME'] = 'fullname'
         self.attr_map['HTTP_SHIB_PERSON_MAIL'] = 'email'
+        self.rattr_map['fullname'] = 'HTTP_SHIB_PERSON_COMMONNAME'
+        self.rattr_map['email'] = 'HTTP_SHIB_PERSON_MAIL'
 
         #Properties for the Property Manager.
         self.max_brackets = 6
@@ -269,41 +274,29 @@ class ShibbolethHelper(BasePlugin):
         if isinstance( login, basestring ):
             login = [login]
 
-        keywords = copy.deepcopy(kw)
-        keywords.update( { 'id' : id
-                         , 'login' : login
-                         , 'exact_match' : exact_match
-                         , 'sort_by' : sort_by
-                         , 'max_results' : max_results
-                         }
-                       )
-
-        if exact_match:
-            if id:
-                user_ids.extend([x for x in id])
-            elif login:
-                user_ids.extend([x for x in login])
-            else:
-                return {}
-            user_filter = None
-
         if not user_ids:
             user_ids = self.listUserIds()
             user_ids.sort()
-            user_filter = _ZODBUserFilter(id, login, **kw)
+            user_filter = _ShibUserFilter(id, login, exact_match, self.rattr_map, **kw)
+
+        if not id and not login and not kw:
+            user_filter = None
 
         for user_id in user_ids:
-
-            if self.store.get(user_id):
+            data = self.store.get(user_id)
+            if data:
                 e_url = '%s/manage_users' % self.getId()
                 qs = 'user_id=%s' % user_id
 
                 info = { 'id' : self.prefix + user_id
                        , 'login' : user_id
                        , 'pluginid' : plugin_id
+                       , 'email' : data.get(self.rattr_map.get('email'), '')
+                       , 'title' : data.get(self.rattr_map.get('fullname'), user_id)
+                       , 'description' : data.get(self.rattr_map.get('fullname'), user_id)
                        , 'editurl' : '%s?%s' % (e_url, qs)
                        }
-                if not user_filter or user_filter(info):
+                if not user_filter or user_filter(user_id, user_id, data):
                     user_info.append(info)
 
         return tuple(user_info)
@@ -1067,3 +1060,62 @@ class ShibbolethHelper(BasePlugin):
 classImplements(ShibbolethHelper, interface.IShibbolethHelper)
 
 InitializeClass( ShibbolethHelper )
+
+
+class _ShibUserFilter:
+
+    def __init__( self
+                , id=None
+                , login=None
+                , exact_match=False
+                , rattr_map={}
+                , **kw
+                ):
+
+        self._filter_ids = id
+        self._filter_logins = login
+        self._filter_keywords = kw
+        self.exact_match = exact_match
+        self.rattr_map = rattr_map
+
+
+    def __call__(self, id=None, login=None, user_info={}):
+        if self._filter_ids:
+            for filter_id in self._filter_ids:
+                if self.match(id, filter_id):
+                    return True
+
+        if self._filter_logins:
+            for filter_login in self._filter_logins:
+                if self.match(login, filter_login):
+                    return True
+
+        for (key, value) in self._filter_keywords.items():
+            testvalue=user_info.get(self.rattr_map.get(key), None)
+            if self.match(testvalue, value):
+                return True
+
+        return False
+
+    def match(self, testvalue, value):
+        if testvalue is None:
+            return False
+
+        if isStringType(testvalue):
+            testvalue = testvalue.lower()
+        if isStringType(value):
+            value = value.lower()
+
+        if self.exact_match:
+            if value != testvalue:
+                return False
+        else:
+            try:
+                if value not in testvalue:
+                    return False
+            except TypeError:
+                # Fall back to exact match if we can check for sub-component
+                if value != testvalue:
+                    return False
+
+        return True

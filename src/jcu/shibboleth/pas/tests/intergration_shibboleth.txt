@@ -59,8 +59,7 @@ Configure Shib user one shib user to have hightened permissions
 
 
     >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers()
-    ({'editurl': 'shib/manage_users?user_id=shibuser1', 'login': 'shibuser1', 'pluginid': 'shib', 'id': 'shibuser1'},)
-
+    ({'description': 'John Smith', 'title': 'John Smith', 'editurl': 'shib/manage_users?user_id=shibuser1', 'email': 'john.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser1', 'id': 'shibuser1'},)
 
 Setup Second Shib user
 -----------------------
@@ -82,4 +81,19 @@ Setup Second Shib user
     >>> user2.url
     'http://nohost/test_folder_1_/login_form?form.submitted=1'
     >>> user2.open("%s/manage_search" % aclusers_url)
+
+    >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers()
+    ({'description': 'John Smith', 'title': 'John Smith', 'editurl': 'shib/manage_users?user_id=shibuser1', 'email': 'john.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser1', 'id': 'shibuser1'}, {'description': 'Jane Smith', 'title': 'Jane Smith', 'editurl': 'shib/manage_users?user_id=shibuser2', 'email': 'jane.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser2', 'id': 'shibuser2'})
+
+    >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers(fullname='John')
+    ({'description': 'John Smith', 'title': 'John Smith', 'editurl': 'shib/manage_users?user_id=shibuser1', 'email': 'john.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser1', 'id': 'shibuser1'},)
+
+    >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers(fullname='Smith')
+    ({'description': 'John Smith', 'title': 'John Smith', 'editurl': 'shib/manage_users?user_id=shibuser1', 'email': 'john.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser1', 'id': 'shibuser1'}, {'description': 'Jane Smith', 'title': 'Jane Smith', 'editurl': 'shib/manage_users?user_id=shibuser2', 'email': 'jane.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser2', 'id': 'shibuser2'})
+
+    >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers(id='shibuser2')
+    ({'description': 'Jane Smith', 'title': 'Jane Smith', 'editurl': 'shib/manage_users?user_id=shibuser2', 'email': 'jane.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser2', 'id': 'shibuser2'},)
+
+    >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers(id='shibuser2', exact_match=True)
+    ({'description': 'Jane Smith', 'title': 'Jane Smith', 'editurl': 'shib/manage_users?user_id=shibuser2', 'email': 'jane.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser2', 'id': 'shibuser2'},)
 
