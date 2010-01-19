@@ -1,4 +1,4 @@
 recursive-include doc *.rst 
-recursive-include src *.xml *.txt *.zpt *.zcml *.png *.stx
+recursive-include src *.xml *.txt *.zpt *.zcml *.png *.stx *.pt
 include docs/*
 include src/INSTALL
