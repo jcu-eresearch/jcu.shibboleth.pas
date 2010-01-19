@@ -50,6 +50,10 @@ class IShibbolethHelper(IAuthenticationPlugin,
                            description=_(u""),
                            required=True)
 
+    sso_url = schema.TextLine(title=_(u"The location of the SSO that will authenticate the user."),
+                           description=_(u"The '%s' symbol should be placed in the string where the return url should be added."),
+                           required=True)
+
 
 class IShibbolethAttributes(Interface):
     attr_map = schema.Dict(title=_(u"Shibboleth SP configuration dir"),

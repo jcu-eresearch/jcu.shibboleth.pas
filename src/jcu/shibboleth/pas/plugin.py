@@ -89,6 +89,7 @@ class ShibbolethHelper(BasePlugin):
         self.userid_attribute = 'HTTP_REMOTE_USER'
         self.idp_attribute = 'HTTP_SHIB_IDENTITY_PROVIDER'
         self.shibboleth_config_dir = '/etc/shibboleth'
+        self.sso_url = '/Shibboleth.sso/DS?target=%s'
 
 
     def __setup_compiled_func_map(self):
