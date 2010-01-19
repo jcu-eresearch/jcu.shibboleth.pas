@@ -157,7 +157,7 @@ class ShibbolethHelper(BasePlugin):
             return True
 
         if not self.__validShibSession(request):
-            self.log(INFO, "Not a valid Request")
+            self.log(INFO, "no valid shibboleth session")
             resp.redirect("%s?came_from=%s" % (url, came_from))
 
         session = self.REQUEST.SESSION
@@ -174,16 +174,26 @@ class ShibbolethHelper(BasePlugin):
     def extractCredentials(self, request ):
         """Extract the credentials
         """
-        if request.SESSION.has_key('shibboleth.session') and request.SESSION.has_key('shibboleth.id'):
-            return {"shibboleth.session": request.SESSION.get('shibboleth.session'),
-                    "shibboleth.id": request.SESSION.get('shibboleth.id')}
-        shibsession = self.__getShibbolethSessionId(request)
-        self.log(DEBUG, "extractCredentials: %s" % shibsession)
-        if not shibsession:
+        session = request.SESSION
+        if session.has_key('shibboleth.session') and session.has_key('shibboleth.id'):
+            return {"shibboleth.session": session.get('shibboleth.session'),
+                    "shibboleth.id": session.get('shibboleth.id')}
+
+        session_id = self.__getShibbolethSessionId(request)
+        self.log(DEBUG, "extractCredentials: %s" % session_id)
+        if not session_id:
             self.log(DEBUG, "extractCredentials: Not Shib")
             return {}
+
+        id, attributes = self.__extract_shib_data(request)
+        session['shibboleth.id'] = id
+        # if not Pseudo-Anonymous then store the users details
+        if not id == session_id:
+            # Store the users attribute in the tool and in the users session
+            self.store[id] = attributes
+
         # Doesn't return login/password because no other tool can help authentication
-        return {"shibboleth.session": shibsession}
+        return {"shibboleth.session": session_id, "shibboleth.id": id}
 
 
     #
