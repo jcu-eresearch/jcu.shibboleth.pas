@@ -6,6 +6,7 @@ from os import path
 
 import Constants as Constants
 import interface
+from BTrees.OOBTree import OOBTree
 from AccessControl.SecurityInfo import ClassSecurityInfo
 from App.class_init import default__class_init__ as InitializeClass
 from Products.PluggableAuthService.interfaces.plugins import IRoleEnumerationPlugin
@@ -32,6 +33,11 @@ class ShibbolethHelper(BasePlugin):
     security = ClassSecurityInfo()
 
     manage_options = ( BasePlugin.manage_options +
+                       ( { 'label': 'Configuration',
+                           'action': 'manage_shibbolethhelper',
+                           'help':('jcu.shibboleth.pas','manage_shibbolethhelper.stx')}
+                         ,
+                       ) +
                        ( { 'label': 'Map Roles',
                            'action': 'manage_roles',
                            'help':('jcu.shibboleth.pas','manage_mapping.stx')}
@@ -49,41 +55,9 @@ class ShibbolethHelper(BasePlugin):
                        )
                      )
 
-    _properties = BasePlugin._properties + \
-                  ({'label': 'Shibboleth Provider Attribute',
-                    'id': Constants.idp_identifier_attribute,
-                    'type': 'string',
-                    'mode': 'w',},
-                   {'label':'User ID Attribute',
-                    'id': 'userid_attribute',
-                    'type': 'string',
-                    'mode':'w'},
-                   {'label':'Maxium Brackets To Display',
-                    'id': 'max_brackets',
-                    'type': 'int',
-                    'mode':'w'},
-                   {'label':'Shibboleth SP configuration dir',
-                    'id': Constants.shib_config_dir,
-                    'type': 'string',
-                    'mode':'w'})
-
-
     _op_switch = None
 
     def __init__(self, id, title=None, total_shib=False):
-        """
-            >>> from jcu.shibboleth.pas.plugin import ShibbolethHelper
-            >>> newshib = ShibbolethHelper('newshib')
-            >>> newshib.getProperty('max_brackets')
-            6
-            >>> newshib.getProperty('userid_attribute')
-            'HTTP_REMOTE_USER'
-            >>> newshib.getProperty('IDP_Attribute')
-            'HTTP_SHIB_IDENTITY_PROVIDER'
-            >>> newshib.getProperty('Shibboleth_Config_Dir')
-            '/etc/shibboleth'
-            >>> del newshib
-        """
         super(ShibbolethHelper, self).__init__()
         self._id = self.id = id
         self.title = title
@@ -98,11 +72,11 @@ class ShibbolethHelper(BasePlugin):
         self.__setup_compiled_func_map()
 
         # Shibboleth attributes store
-        self.store =  PersistentMapping()
+        self.store = OOBTree()
 
         # Shibboleth attributes map
-        self.attr_map = PersistentMapping()
-        self.rattr_map = PersistentMapping()
+        self.attr_map = OOBTree()
+        self.rattr_map = OOBTree()
 
         # Default Values for attribute map
         self.attr_map['HTTP_SHIB_PERSON_COMMONNAME'] = 'fullname'
@@ -113,8 +87,9 @@ class ShibbolethHelper(BasePlugin):
         #Properties for the Property Manager.
         self.max_brackets = 6
         self.userid_attribute = 'HTTP_REMOTE_USER'
-        self.__dict__[Constants.shib_config_dir] = Constants.default_shib_config_dir
-        self.__dict__[Constants.idp_identifier_attribute] = Constants.default_idp_identifier_attribute_value
+        self.idp_attribute = 'HTTP_SHIB_IDENTITY_PROVIDER'
+        self.shibboleth_config_dir = '/etc/shibboleth'
+
 
     def __setup_compiled_func_map(self):
         self._v_compiled_mapping_func_map = {}
@@ -276,7 +251,6 @@ class ShibbolethHelper(BasePlugin):
 
         if not user_ids:
             user_ids = self.listUserIds()
-            user_ids.sort()
             user_filter = _ShibUserFilter(id, login, exact_match, self.rattr_map, **kw)
 
         if not id and not login and not kw:
@@ -517,11 +491,11 @@ class ShibbolethHelper(BasePlugin):
             if v:
                 attributes[k] = v
 
-        uid_attr = self.getProperty('userid_attribute')
+        uid_attr = self.userid_attribute
         if uid_attr.strip():
             if not (uid_attr in request.keys()):
                 id = str(self.__getShibbolethSessionId(request))
-                log.debug("User UID not supplied using handle: %s, from provider: %s." % (id, request[self.getProperty(Constants.idp_identifier_attribute)]))
+                log.debug("User UID not supplied using handle: %s, from provider: %s." % (id, request[self.idp_attribute]))
             else:
                 log.debug('id: %s, %s' % (uid_attr, request[uid_attr]))
                 id = request[uid_attr]
@@ -999,13 +973,13 @@ class ShibbolethHelper(BasePlugin):
         attributes.
             >>> self.app.acl_users.shib.configFile()
             (... 'AttributeRule/@Header')
-            >>> path = self.uf.shib.getProperty('Shibboleth_Config_Dir')
+            >>> path = self.uf.shib.shibboleth_config_dir
             >>> from os import sep
-            >>> swollow = self.uf.shib.manage_changeProperties({"Shibboleth_Config_Dir":path + sep +  'shib2'})
+            >>> swollow = self.uf.shib.shibboleth_config_dir = path + sep + 'shib2'
             >>> self.app.acl_users.shib.configFile()
             (... 'Attribute/@id')
         """
-        dir = self.getProperty(Constants.shib_config_dir)
+        dir = self.shibboleth_config_dir
         if path.exists(path.join(dir, "AAP.xml")):
             shib1 = [u'HTTP_SHIB_APPLICATION_ID', u'HTTP_SHIB_PERSON_MAIL',
                      u'HTTP_SHIB_AUTHENTICATION_METHOD', u'HTTP_SHIB_ORIGIN_SITE',
@@ -1030,9 +1004,9 @@ class ShibbolethHelper(BasePlugin):
             ...     if a in self.uf.shib.getPossibleAttributes():
             ...         continue
             ...     print "Missing Attribute %s" % a
-            >>> path = self.uf.shib.getProperty('Shibboleth_Config_Dir')
+            >>> path = self.uf.shib.shibboleth_config_dir
             >>> from os import sep
-            >>> swollow = self.uf.shib.manage_changeProperties({"Shibboleth_Config_Dir":path + sep +  'shib2'})
+            >>> swollow = self.uf.shib.shibboleth_config_dir = path + sep + 'shib2'
             >>> for a in Attributes:
             ...     if a in self.uf.shib.getPossibleAttributes():
             ...         continue

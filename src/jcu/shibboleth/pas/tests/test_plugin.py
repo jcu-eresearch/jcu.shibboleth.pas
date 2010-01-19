@@ -44,7 +44,7 @@ class TestCase(ZopeTestCase.ZopeTestCase):
 
         # Setup AAP resolver
         path = os.path.dirname(jcu.shibboleth.pas.__file__)
-        self.uf.shib.manage_changeProperties({"Shibboleth_Config_Dir":path + os.sep +  'tests'})
+        self.uf.shib.shibboleth_config_dir = path + os.sep + 'tests'
 
         self.shib = self.app.acl_users.shib
         #from ipdb import set_trace; set_trace()

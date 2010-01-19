@@ -70,7 +70,7 @@ class TestCase(ZopeTestCase.Functional, ZopeTestCase.ZopeTestCase):
 
         # Setup AAP resolver
         path = os.path.dirname(jcu.shibboleth.pas.__file__)
-        self.app.test_folder_1_.acl_users.shib.manage_changeProperties({"Shibboleth_Config_Dir":path + os.sep +  'tests'})
+        self.app.test_folder_1_.acl_users.shib.shibboleth_config_dir = path + os.sep + 'tests'
 
 
 import unittest

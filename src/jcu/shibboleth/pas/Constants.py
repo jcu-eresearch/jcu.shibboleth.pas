@@ -1,11 +1,3 @@
-#Properties Data
-user_cn_attribute = 'User_Common_Name_Attribute'
-idp_identifier_attribute='IDP_Attribute'
-shib_config_dir='Shibboleth_Config_Dir'
-
-#Properties Valuet
-default_idp_identifier_attribute_value = 'HTTP_SHIB_IDENTITY_PROVIDER'
-default_shib_config_dir = '/etc/shibboleth'
 
 #defaultProperties = {max_brackets:[6, 'int'],
 #                     user_uid_attribute: ['HTTP_SHIB_PERSON_UID','string'],

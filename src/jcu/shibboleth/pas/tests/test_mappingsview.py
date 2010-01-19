@@ -36,7 +36,7 @@ class TestCase(ShibbolethTestCase):
 
         # Setup AAP resolver
         path = os.path.dirname(base.__file__)
-        self.uf.shib.manage_changeProperties({"Shibboleth_Config_Dir":path})
+        self.uf.shib.shibboleth_config_dir = path
 
         self.shib = self.folder.acl_users.shib
 

@@ -14,8 +14,12 @@ from Products.PluggableAuthService.interfaces.plugins import \
 from Products.PluggableAuthService.interfaces.plugins import \
         IPropertiesPlugin
 
+from zope import schema
+from zope.interface import Interface
 
-class IShibbolethHelper (IAuthenticationPlugin,
+from jcu.shibboleth.pas import ShibbolethHelperMessageFactory as _
+
+class IShibbolethHelper(IAuthenticationPlugin,
         IRolesPlugin,
         IGroupsPlugin,
 #       IUserFactoryPlugin,
@@ -25,3 +29,30 @@ class IShibbolethHelper (IAuthenticationPlugin,
         ILoginPasswordExtractionPlugin ):
     """interface for PasShibboleth
     """
+
+    userid_attribute = schema.TextLine(title=_(u"User ID Attribute"),
+                              description=_(u""),
+                              required=True)
+
+    prefix = schema.TextLine(title=_(u"Optional Prefix"),
+                              description=_(u""),
+                              required=False)
+
+    idp_attribute = schema.TextLine(title=_(u"Shibboleth Provider Attribute"),
+                           description=_(u""),
+                           required=True)
+
+    max_brackets = schema.Int(title=_(u"Maxium Brackets To Display"),
+                           description=_(u""),
+                           required=True)
+
+    shibboleth_config_dir = schema.TextLine(title=_(u"Shibboleth SP configuration dir"),
+                           description=_(u""),
+                           required=True)
+
+
+class IShibbolethAttributes(Interface):
+    attr_map = schema.Dict(title=_(u"Shibboleth SP configuration dir"),
+                           description=_(u""),
+                           required=True)
+

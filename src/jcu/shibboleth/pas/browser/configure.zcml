@@ -10,6 +10,13 @@
     file="shib.png" /-->
 
   <browser:page
+       for="..interface.IShibbolethHelper"
+       name="manage_shibbolethhelper"
+       class=".shibbolethhelper.ShibbolethHelperEditForm"
+       permission="zope2.ManageUsers"
+       />
+
+  <browser:page
     for="..interface.IShibbolethHelper"
     name="manage_importexport"
     template="importexport.zpt"
