@@ -63,7 +63,7 @@ class ShibbolethHelper(BasePlugin):
         self.title = title
         self.total_shib = total_shib
         self.log(INFO,'Initilizing Shibboleth Authentication.')
-        self.__login_location = "login"
+        self.login_path = "login"
         self.role_mapping =  PersistentMapping()
         self.log(INFO,'Role Mapping. %s' % self.role_mapping)
         self.group_mapping =  PersistentMapping()
@@ -109,7 +109,7 @@ class ShibbolethHelper(BasePlugin):
 
         shibsession = credentials.get('shibboleth.session')
         log.debug('Authentication Requested.')
-        url = "%s/%s" % (self.absolute_url(), self.__login_location)
+        url = self.getLoginURL()
         request = self.REQUEST
         log.debug("URLS: %s, %s" % (request.URL, url))
         if request.URL == url:
@@ -142,7 +142,7 @@ class ShibbolethHelper(BasePlugin):
         resp = req['RESPONSE']
 
         self.log(INFO, "Challange.")
-        url = "%s/%s" % (self.absolute_url(), self.__login_location)
+        url = self.getLoginURL()
         came_from = req.get('URL', '')
         query = req.get('QUERY_STRING')
         if query:
@@ -381,6 +381,17 @@ class ShibbolethHelper(BasePlugin):
             self.log(INFO, "came_from  not specified, using: %s" % request.BASE2)
             came_from = request.BASE2+"/login_form?form.submitted=1"
         return response.redirect(came_from)
+
+
+    security.declarePrivate('getLoginURL')
+    def getLoginURL(self):
+        """ Where to send people for logging in """
+        if self.login_path.startswith('/'):
+            return self.login_path
+        elif self.login_path != '':
+            return '%s/%s' % (self.absolute_url(), self.login_path)
+        else:
+            return None
 
 
 #    security.declarePublic('listManageOptions')
