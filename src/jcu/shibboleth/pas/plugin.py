@@ -164,7 +164,7 @@ class ShibbolethHelper(BasePlugin):
     #    ILoginPasswordExtractionPlugin implementation
     #
     security.declarePrivate('extractCredentials')
-    def extractCredentials(self, request ):
+    def extractCredentials(self, request):
         """Extract the credentials
         """
         session = request.SESSION
@@ -184,6 +184,10 @@ class ShibbolethHelper(BasePlugin):
         if not id == session_id:
             # Store the users attribute in the tool and in the users session
             self.store[id] = attributes
+
+        # set session level variables so that we won't need to keep authing
+        session.set('shibboleth.session', session_id)
+        session.set('shibboleth.id', id)
 
         # Doesn't return login/password because no other tool can help authentication
         return {"shibboleth.session": session_id, "shibboleth.id": id}
