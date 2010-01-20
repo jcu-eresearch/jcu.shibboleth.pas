@@ -85,7 +85,7 @@ from Products.PluggableAuthService.tests.conformance \
 from Products.PluggableAuthService.tests.conformance \
         import IChallengePlugin_conformance
 from Products.PluggableAuthService.tests.conformance \
-        import ILoginPasswordExtractionPlugin_conformance
+        import IExtractionPlugin_conformance
 
 from Products.PluggableAuthService.tests.test_PluggableAuthService \
      import FauxRequest, FauxResponse, FauxObject, FauxRoot, FauxContainer
@@ -128,7 +128,7 @@ class ConformanceTestCase(unittest.TestCase,
                           IGroupsPlugin_conformance,
                           IUserEnumerationPlugin_conformance,
                           IChallengePlugin_conformance,
-                          ILoginPasswordExtractionPlugin_conformance):
+                          IExtractionPlugin_conformance):
     def _getTargetClass(self):
 
         from jcu.shibboleth.pas.plugin import ShibbolethHelper

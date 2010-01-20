@@ -1,6 +1,6 @@
 from Products.PluggableAuthService import interfaces
 from Products.PluggableAuthService.interfaces.plugins import \
-        ILoginPasswordExtractionPlugin
+        IExtractionPlugin
 from Products.PluggableAuthService.interfaces.plugins import \
         IChallengePlugin
 from Products.PluggableAuthService.interfaces.plugins import \
@@ -22,11 +22,10 @@ from jcu.shibboleth.pas import ShibbolethHelperMessageFactory as _
 class IShibbolethHelper(IAuthenticationPlugin,
         IRolesPlugin,
         IGroupsPlugin,
-#       IUserFactoryPlugin,
         IUserEnumerationPlugin,
         IChallengePlugin,
         IPropertiesPlugin,
-        ILoginPasswordExtractionPlugin ):
+        IExtractionPlugin ):
     """interface for PasShibboleth
     """
 

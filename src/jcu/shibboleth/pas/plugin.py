@@ -161,7 +161,7 @@ class ShibbolethHelper(BasePlugin):
 
 
     #
-    #    ILoginPasswordExtractionPlugin implementation
+    #    IExtractionPlugin implementation
     #
     security.declarePrivate('extractCredentials')
     def extractCredentials(self, request):
