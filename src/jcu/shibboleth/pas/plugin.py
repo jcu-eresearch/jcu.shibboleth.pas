@@ -519,8 +519,7 @@ class ShibbolethHelper(BasePlugin):
                 log.debug('id: %s, %s' % (uid_attr, request[uid_attr]))
                 id = request[uid_attr]
         else:
-            log.error("%s property is not set to anything." % 'userid_attribute')
-        log.info("Extracted Values: %s" % str(attributes))
+            log.error("userid_attribute is not set to anything.")
         return id, attributes
 
 
