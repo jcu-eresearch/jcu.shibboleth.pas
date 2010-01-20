@@ -33,9 +33,12 @@ class IShibbolethHelper(IAuthenticationPlugin,
                               description=_(u""),
                               required=True)
 
-    prefix = schema.TextLine(title=_(u"Optional Prefix"),
-                              description=_(u""),
-                              required=False)
+    # TODO currently disabled because when you save the form with no input it
+    # sets the attribute to None. This causes the plugin to fail.
+    #prefix = schema.TextLine(title=_(u"Optional Prefix"),
+    #                          description=_(u""),
+    #                          default=u"",
+    #                          required=False)
 
     idp_attribute = schema.TextLine(title=_(u"Shibboleth Provider Attribute"),
                            description=_(u""),
