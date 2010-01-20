@@ -108,7 +108,7 @@ class ShibbolethHelper(BasePlugin):
             log.debug("Will only authenticate Shibboleth credentials.")
             return None
 
-        shibsession = credentials.get('shibboleth.session')
+        session_id = credentials.get('shibboleth.session')
         log.debug('Authentication Requested.')
         url = self.getLoginURL()
         request = self.REQUEST
@@ -117,16 +117,9 @@ class ShibbolethHelper(BasePlugin):
             log.debug("Not attempting to authenticate login request.")
             return None
 
-        # XXX don't think that this is required because if it comes this far it has already had the shib session extracted by the previous interface
-        if not self.__validShibSession(request):
-            log.info('Invalid Session')
-            if shibsession != None:
-                self.challenge(self.REQUEST, self.REQUEST['RESPONSE'])
-            return None
-
         if credentials['shibboleth.id'] == credentials['shibboleth.session']:
             login = "Pseudo-Anonymous: %s" % credentials['shibboleth.id']
-            return (self.prefix + shibsession, login)
+            return (self.prefix + session_id, login)
 
         login = credentials.get('shibboleth.id')
         return (self.prefix + login, login)
