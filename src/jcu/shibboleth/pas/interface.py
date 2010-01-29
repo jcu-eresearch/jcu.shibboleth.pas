@@ -14,6 +14,8 @@ from Products.PluggableAuthService.interfaces.plugins import \
 from Products.PluggableAuthService.interfaces.plugins import \
         IPropertiesPlugin
 
+from Products.PlonePAS.interfaces.plugins import IUserIntrospection
+
 from zope import schema
 from zope.interface import Interface
 
@@ -25,7 +27,8 @@ class IShibbolethHelper(IAuthenticationPlugin,
         IUserEnumerationPlugin,
         IChallengePlugin,
         IPropertiesPlugin,
-        IExtractionPlugin ):
+        IExtractionPlugin,
+        IUserIntrospection):
     """interface for PasShibboleth
     """
 

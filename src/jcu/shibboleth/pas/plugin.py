@@ -390,6 +390,34 @@ class ShibbolethHelper(BasePlugin):
             came_from = request.BASE2+"/login_form?form.submitted=1"
         return response.redirect(came_from)
 
+    #
+    # IUserIntrospection implementation
+    #
+
+    def getUserIds(self):
+        """
+        Return a list of user ids
+        """
+        return self.listUserIds()
+
+    def getUserNames(self):
+        """
+        Return a list of usernames
+        """
+        return [x['login_name'] for x in self.listUserInfo()]
+
+    def getUsers(self):
+        """
+        Return a list of users
+        """
+        uf = self.acl_users
+        return [uf.getUserById(x) for x in self.getUserIds()]
+
+    #security.declarePrivate('resetCredentials')
+    #def resetCredentials(self, request, response):
+    #    """ Raise unauthorized to tell browser to clear credentials. """
+    #    response.expireCookie(self.cookie_name, path='/')
+
 
     security.declarePrivate('getLoginURL')
     def getLoginURL(self):
