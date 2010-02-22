@@ -34,9 +34,9 @@ class TestCase(ShibbolethTestCase):
         self.folder.acl_users['shib'] = shib
         self.uf = self.folder.acl_users
 
-        # Setup AAP resolver
-        path = os.path.dirname(base.__file__)
-        self.uf.shib.shibboleth_config_dir = path
+        # Setup attribute map resolver
+        path = os.path.dirname(jcu.shibboleth.pas.__file__)
+        self.uf.shib.shibboleth_config_dir = os.path.join(path, 'tests', 'shib2')
 
         self.shib = self.folder.acl_users.shib
 

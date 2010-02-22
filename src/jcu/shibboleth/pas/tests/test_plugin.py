@@ -42,12 +42,11 @@ class TestCase(ZopeTestCase.ZopeTestCase):
         shib = ShibbolethHelper('shib', 'Shibboleth Helper')
         self.app.acl_users.acl_users['shib'] = shib
 
-        # Setup AAP resolver
+        # Setup attribute map resolver
         path = os.path.dirname(jcu.shibboleth.pas.__file__)
-        self.uf.shib.shibboleth_config_dir = path + os.sep + 'tests'
+        self.uf.shib.shibboleth_config_dir = os.path.join(path, 'tests', 'shib2')
 
         self.shib = self.app.acl_users.shib
-        #from ipdb import set_trace; set_trace()
 
 def test_suite():
     return unittest.TestSuite([

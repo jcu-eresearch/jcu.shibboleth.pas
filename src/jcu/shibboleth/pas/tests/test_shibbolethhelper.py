@@ -68,9 +68,9 @@ class TestCase(ZopeTestCase.Functional, ZopeTestCase.ZopeTestCase):
         plugins.activatePlugin(IUserEnumerationPlugin, 'shib')
         #plugins.activatePlugin(IChallengePlugin, 'basic_auth')
 
-        # Setup AAP resolver
+        # Setup attribute map resolver
         path = os.path.dirname(jcu.shibboleth.pas.__file__)
-        self.app.test_folder_1_.acl_users.shib.shibboleth_config_dir = path + os.sep + 'tests'
+        self.app.test_folder_1_.acl_users.shib.shibboleth_config_dir = os.path.join(path, 'tests', 'shib2')
 
 
 import unittest

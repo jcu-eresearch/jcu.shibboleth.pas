@@ -11,20 +11,15 @@ Setup Shib user
 
     >>> user1 = Browser()
     >>> shib_url = "%s" % self.app.test_folder_1_.acl_users.shib.absolute_url()
+    >>> url = "%s" % self.app.test_folder_1_.absolute_url()
     >>> user1.addHeader('REMOTE_USER', 'shibuser1')
     >>> user1.addHeader('SHIB_IDENTITY_PROVIDER', 'https://localdomain.com/shibboleth')
-    >>> user1.addHeader('SHIB_PERSON_MAIL', 'john.smith@localdomain.com')
-    >>> user1.addHeader('SHIB_PERSON_COMMONNAME', 'John Smith')
-    >>> from mechanize import Cookie
-    >>> shib_cookie = Cookie(version=0, name='_shibsession_5dc97d035cb931c8123d34c999e481deb8e5204c', value='a48647d803d10048d2838c0b9bde78b8', port=None, port_specified=False, domain='nohost.local', domain_specified=False, domain_initial_dot=False, path='/', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={}, rfc2109=False)
-    >>> user1.mech_browser._ua_handlers['_cookies'].cookiejar.set_cookie(shib_cookie)
-    >>> from mechanize import HTTPError
-    >>> try:
-    ...     user1.open("%s/login" % shib_url)
-    ... except HTTPError:
-    ...     pass
+    >>> user1.addHeader('MAIL', 'john.smith@localdomain.com')
+    >>> user1.addHeader('DISPLAYNAME', 'John Smith')
+    >>> user1.addHeader('SHIB_SESSION_ID', '_3084vn3e7yluixc17k52dsad7h')
+    >>> user1.open(url)
     >>> user1.url
-    'http://nohost/test_folder_1_/login_form?form.submitted=1'
+    'http://nohost/test_folder_1_'
 
 Configure Shib user one shib user to have hightened permissions
 ---------------------------------------------------------------
@@ -45,7 +40,7 @@ Configure Shib user one shib user to have hightened permissions
     >>> rolemap = manager.getForm(name='Manager')
     >>> shib_attr = rolemap.getControl(name="var_name:0")
     >>> shib_attr.displayOptions
-    ['HTTP_REMOTE_USER', 'HTTP_SHIB_APPLICATION_ID', 'HTTP_SHIB_AUTHENTICATION_METHOD', 'HTTP_SHIB_EP_AFFILIATION', 'HTTP_SHIB_EP_ENTITLEMENT', 'HTTP_SHIB_EP_ORGDN', 'HTTP_SHIB_EP_ORGUNITDN', 'HTTP_SHIB_EP_PRIMARYAFFILIATION', 'HTTP_SHIB_EP_PRIMARYORGUNITDN', 'HTTP_SHIB_EP_UNSCOPEDAFFILIATION', 'HTTP_SHIB_IDENTITY_PROVIDER', 'HTTP_SHIB_INETORGPERSON_BUSINESSCAT', 'HTTP_SHIB_INETORGPERSON_CARLICENSE', 'HTTP_SHIB_INETORGPERSON_DEPTNUM', 'HTTP_SHIB_INETORGPERSON_DISPLAYNAME', 'HTTP_SHIB_INETORGPERSON_EMPLOYEENUM', 'HTTP_SHIB_INETORGPERSON_EMPLOYEETYPE', 'HTTP_SHIB_INETORGPERSON_GIVENNAME', 'HTTP_SHIB_INETORGPERSON_INITIALS', 'HTTP_SHIB_INETORGPERSON_MAIL', 'HTTP_SHIB_INETORGPERSON_MANAGER', 'HTTP_SHIB_INETORGPERSON_PREFLANG', 'HTTP_SHIB_INETORGPERSON_ROOMNUM', 'HTTP_SHIB_ORGPERSON_FAX', 'HTTP_SHIB_ORGPERSON_LOCALITY', 'HTTP_SHIB_ORGPERSON_OFFICENAME', 'HTTP_SHIB_ORGPERSON_ORGUNIT', 'HTTP_SHIB_ORGPERSON_POBOX', 'HTTP_SHIB_ORGPERSON_POSTALCODE', 'HTTP_SHIB_ORGPERSON_SEEALSO', 'HTTP_SHIB_ORGPERSON_STATE', 'HTTP_SHIB_ORGPERSON_STREET', 'HTTP_SHIB_ORGPERSON_TITLE', 'HTTP_SHIB_ORIGIN_SITE', 'HTTP_SHIB_PERSON_COMMONNAME', 'HTTP_SHIB_PERSON_DESCRIPTION', 'HTTP_SHIB_PERSON_MAIL', 'HTTP_SHIB_PERSON_SURNAME', 'HTTP_SHIB_PERSON_TELEPHONENUMBER', 'HTTP_SHIB_TARGETEDID']
+    ['HTTP_AFFILIATION', 'HTTP_BUSINESSCATEGORY', 'HTTP_CARLICENSE', 'HTTP_CN', 'HTTP_DEPARTMENTNUMBER', 'HTTP_DESCRIPTION', 'HTTP_DISPLAYNAME', 'HTTP_EMPLOYEENUMBER', 'HTTP_EMPLOYEETYPE', 'HTTP_ENTITLEMENT', 'HTTP_EPPN', 'HTTP_FACSIMILETELEPHONENUMBER', 'HTTP_GIVENNAME', 'HTTP_INITIALS', 'HTTP_L', 'HTTP_MAIL', 'HTTP_MANAGER', 'HTTP_O', 'HTTP_OU', 'HTTP_PERSISTENT_ID', 'HTTP_PHYSICALDELIVERYOFFICENAME', 'HTTP_POSTALCODE', 'HTTP_POSTOFFICEBOX', 'HTTP_PREFERREDLANGUAGE', 'HTTP_PRIMARY_AFFILIATION', 'HTTP_REMOTE_USER', 'HTTP_SEEALSO', 'HTTP_SHIB_APPLICATION_ID', 'HTTP_SHIB_ASSURANCE', 'HTTP_SHIB_AUTHENTICATION_INSTANT', 'HTTP_SHIB_AUTHNCONTEXT_CLASS', 'HTTP_SHIB_AUTHNCONTEXT_DECL', 'HTTP_SHIB_CN', 'HTTP_SHIB_GIVENNAME', 'HTTP_SHIB_L', 'HTTP_SHIB_MAIL', 'HTTP_SHIB_O', 'HTTP_SHIB_PERSON_MAIL', 'HTTP_SHIB_SHARED_TOKEN', 'HTTP_SHIB_SN', 'HTTP_SN', 'HTTP_ST', 'HTTP_STREET', 'HTTP_TARGETED_ID', 'HTTP_TELEPHONENUMBER', 'HTTP_TITLE', 'HTTP_UNSCOPED_AFFILIATION']
     >>> shib_attr.clear()
     >>> shib_attr.getControl('HTTP_REMOTE_USER').click()
     >>> shib_operation = rolemap.getControl(name="opp_type:0")
@@ -57,7 +52,6 @@ Configure Shib user one shib user to have hightened permissions
     >>> shib_value.value = 'shibuser2'
     >>> rolemap.submit(name='save_map')
 
-
     >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers()
     ({'description': 'John Smith', 'title': 'John Smith', 'editurl': 'shib/manage_users?user_id=shibuser1', 'email': 'john.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser1', 'id': 'shibuser1'},)
 
@@ -68,18 +62,13 @@ Setup Second Shib user
     >>> user2 = Browser()
     >>> user2.addHeader('REMOTE_USER', 'shibuser2')
     >>> user2.addHeader('SHIB_IDENTITY_PROVIDER', 'https://localdomain.com/shibboleth')
-    >>> user2.addHeader('SHIB_PERSON_MAIL', 'jane.smith@localdomain.com')
-    >>> user2.addHeader('SHIB_PERSON_COMMONNAME', 'Jane Smith')
-    >>> from mechanize import Cookie
-    >>> shib_cookie = Cookie(version=0, name='_shibsession_5dc97d035cb931c8123d34c999e481deb8e5204d', value='a48647d803d10048d2838c0b9bde78b9', port=None, port_specified=False, domain='nohost.local', domain_specified=False, domain_initial_dot=False, path='/', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={}, rfc2109=False)
-    >>> user2.mech_browser._ua_handlers['_cookies'].cookiejar.set_cookie(shib_cookie)
+    >>> user2.addHeader('MAIL', 'jane.smith@localdomain.com')
+    >>> user2.addHeader('DISPLAYNAME', 'Jane Smith')
+    >>> user2.addHeader('SHIB_SESSION_ID', '_2084vn3e7yluixc17k52dsad7h')
     >>> from mechanize import HTTPError
-    >>> try:
-    ...     user2.open("%s/login" % shib_url)
-    ... except HTTPError:
-    ...     pass
+    >>> user2.open(url)
     >>> user2.url
-    'http://nohost/test_folder_1_/login_form?form.submitted=1'
+    'http://nohost/test_folder_1_'
     >>> user2.open("%s/manage_search" % aclusers_url)
 
     >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers()
