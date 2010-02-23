@@ -468,12 +468,7 @@ class ShibbolethHelper(BasePlugin):
             >>> self.shib._ShibbolethHelper__getShibbolethSessionId(self.shib.REQUEST)
             '_9c86b438e92e1de9b378a23f4838a959'
         """
-        return request.get('HTTP_SHIB_SESSION_ID')
-        for key in request.cookies.keys():
-            if key.startswith("_shibsession_"):
-                log.debug("__getShibbolethSessionId: %s" % request.cookies[key])
-                return str(request.cookies[key])
-        return None
+        return request.get('HTTP_SHIB_SESSION_ID', None)
 
 
     security.declarePrivate('__validShibSession')
