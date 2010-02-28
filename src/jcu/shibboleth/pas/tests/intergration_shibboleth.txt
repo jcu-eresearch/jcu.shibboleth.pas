@@ -6,6 +6,7 @@ test setup
     >>> from Testing.ZopeTestCase import user_name, user_password
     >>> from Products.Five.testbrowser import Browser
 
+
 Setup Shib user
 ---------------
 
@@ -20,6 +21,7 @@ Setup Shib user
     >>> user1.open(url)
     >>> user1.url
     'http://nohost/test_folder_1_'
+
 
 Configure Shib user one shib user to have hightened permissions
 ---------------------------------------------------------------
@@ -55,6 +57,7 @@ Configure Shib user one shib user to have hightened permissions
     >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers()
     ({'description': 'John Smith', 'title': 'John Smith', 'editurl': 'shib/manage_users?user_id=shibuser1', 'email': 'john.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser1', 'id': 'shibuser1'},)
 
+
 Setup Second Shib user
 -----------------------
 
@@ -70,6 +73,10 @@ Setup Second Shib user
     >>> user2.url
     'http://nohost/test_folder_1_'
     >>> user2.open("%s/manage_search" % aclusers_url)
+
+
+Test enumerateUsers interface
+-----------------------------
 
     >>> self.app.test_folder_1_.acl_users.shib.enumerateUsers()
     ({'description': 'John Smith', 'title': 'John Smith', 'editurl': 'shib/manage_users?user_id=shibuser1', 'email': 'john.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser1', 'id': 'shibuser1'}, {'description': 'Jane Smith', 'title': 'Jane Smith', 'editurl': 'shib/manage_users?user_id=shibuser2', 'email': 'jane.smith@localdomain.com', 'pluginid': 'shib', 'login': 'shibuser2', 'id': 'shibuser2'})
