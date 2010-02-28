@@ -149,15 +149,7 @@ class ShibbolethHelper(BasePlugin):
             resp.redirect("%s?came_from=%s" % (url, came_from), lock=1)
             return True
 
-        if not self.__validShibSession(request):
-            self.log(INFO, "no valid shibboleth session")
-            resp.redirect("%s?came_from=%s" % (url, came_from))
-
-        session = self.REQUEST.SESSION
-        if shibSessionId and not session.has_key(shibSessionId):
-            resp.redirect("%s?came_from=%s" % (url, came_from))
-
-        return True
+        return False
 
 
     #
