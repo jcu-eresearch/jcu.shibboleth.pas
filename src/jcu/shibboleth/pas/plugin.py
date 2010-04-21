@@ -129,7 +129,7 @@ class ShibbolethHelper(BasePlugin):
     #   IChallengePlugin implementation
     #
     security.declarePrivate('challenge')
-    def challenge(self, request, response ):
+    def challenge(self, request, response):
         """The Challange
         """
         req = self.REQUEST
@@ -483,7 +483,7 @@ class ShibbolethHelper(BasePlugin):
 
         sesid = self.__getShibbolethSessionId(request)
         if request.SESSION.has_key('shibboleth.session'):
-            return  request.SESSION['shibboleth.session'] == sesid
+            return request.SESSION['shibboleth.session'] == sesid
         return False
 
 
