@@ -1,18 +1,14 @@
 from Products.PluggableAuthService import interfaces
 from Products.PluggableAuthService.interfaces.plugins import \
-        IExtractionPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IChallengePlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IAuthenticationPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IRolesPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IGroupsPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IUserEnumerationPlugin
-from Products.PluggableAuthService.interfaces.plugins import \
-        IPropertiesPlugin
+        IExtractionPlugin, \
+        IChallengePlugin, \
+        IAuthenticationPlugin, \
+        IRolesPlugin, \
+        IGroupsPlugin, \
+        IUserEnumerationPlugin, \
+        IPropertiesPlugin, \
+        ICredentialsResetPlugin
+
 
 from Products.PlonePAS.interfaces.plugins import IUserIntrospection
 
@@ -28,7 +24,8 @@ class IShibbolethHelper(IAuthenticationPlugin,
         IChallengePlugin,
         IPropertiesPlugin,
         IExtractionPlugin,
-        IUserIntrospection):
+        IUserIntrospection,
+        ICredentialsResetPlugin):
     """interface for PasShibboleth
     """
 

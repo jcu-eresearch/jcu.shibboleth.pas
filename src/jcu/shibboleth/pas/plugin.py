@@ -82,11 +82,12 @@ class ShibbolethHelper(BasePlugin):
         self.attr_map['HTTP_DISPLAYNAME'] = 'fullname'
         self.attr_map['HTTP_MAIL'] = 'email'
         self.rattr_map['fullname'] = 'HTTP_DISPLAYNAME'
+        self.rattr_map['fullname_fallback'] = 'HTTP_CN'
         self.rattr_map['email'] = 'HTTP_MAIL'
 
         #Properties for the Property Manager.
         self.max_brackets = 6
-        self.userid_attribute = 'HTTP_REMOTE_USER'
+        self.userid_attribute = 'HTTP_SHARED_TOKEN'
         self.idp_attribute = 'HTTP_SHIB_IDENTITY_PROVIDER'
         self.shibboleth_config_dir = '/etc/shibboleth'
         self.sso_url = '/Shibboleth.sso/DS'
@@ -150,6 +151,16 @@ class ShibbolethHelper(BasePlugin):
             return True
 
         return False
+
+    #
+    #    ICredentialsResetPlugin implementation
+    #
+    security.declarePrivate('extractCredentials')
+    def resetCredentials(self, request, response):
+        #expire the _shibsession_XXX cookie here
+        #for cookie in request.cookies:
+        #    if 'shibsession' in cookie:
+        #        response.expireCookie(cookie, path='/')
 
 
     #
@@ -264,12 +275,15 @@ class ShibbolethHelper(BasePlugin):
                 e_url = '%s/manage_users' % self.getId()
                 qs = 'user_id=%s' % user_id
 
+                fullname = data.get(self.rattr_map.get('fullname')) \
+                        or data.get(self.rattr_map.get('fullname_fallback'), \
+                                                       user_id)
                 info = { 'id' : self.prefix + user_id
                        , 'login' : user_id
                        , 'pluginid' : plugin_id
                        , 'email' : data.get(self.rattr_map.get('email'), '')
-                       , 'title' : data.get(self.rattr_map.get('fullname'), user_id)
-                       , 'description' : data.get(self.rattr_map.get('fullname'), user_id)
+                       , 'title' : fullname
+                       , 'description' : fullname
                        , 'editurl' : '%s?%s' % (e_url, qs)
                        }
                 if not user_filter or user_filter(user_id, user_id, data):
@@ -299,6 +313,49 @@ class ShibbolethHelper(BasePlugin):
             >>> print prop.propertyItems()
             [('email', 'matthew.morgan@jcu.edu.au'), ('fullname', 'Matthew Morgan'), ('location', None)]
 
+            Test for an instance where IdP doesn't provide our display name
+
+            >>> self.shib.store = {'david': {
+            ...     u'HTTP_CN': 'David B',
+            ...     u'HTTP_MAIL': 'david@jcu.edu.au',
+            ...     u'HTTP_REMOTE_USER':'david',
+            ...     }
+            ... }
+            >>> u = self.app.acl_users.getUser('david')
+            >>> u.listPropertysheets()
+            ['shib']
+            >>> prop = u.getPropertysheet('shib')
+            >>> print prop.propertyItems()
+            [('email', 'david@jcu.edu.au'), ('fullname', 'David B'), ('location', None)]
+
+            Test for instance where our display name should take precedence
+
+            >>> self.shib.store = {'david': {
+            ...     u'HTTP_DISPLAYNAME': 'Real Name',
+            ...     u'HTTP_CN': 'Override me',
+            ...     u'HTTP_MAIL': 'david@jcu.edu.au',
+            ...     u'HTTP_REMOTE_USER':'david',
+            ...     }
+            ... }
+            >>> u = self.app.acl_users.getUser('david')
+            >>> u.listPropertysheets()
+            ['shib']
+            >>> prop = u.getPropertysheet('shib')
+            >>> print prop.propertyItems()
+            [('email', 'david@jcu.edu.au'), ('fullname', 'Real Name'), ('location', None)]
+
+            Test for the situation where there aren't any names defined at all.
+            >>> self.shib.store = {'david': {
+            ...     u'HTTP_MAIL': 'david@jcu.edu.au',
+            ...     u'HTTP_REMOTE_USER':'david',
+            ...     }
+            ... }
+            >>> u = self.app.acl_users.getUser('david')
+            >>> prop = u.getPropertysheet('shib')
+            >>> print prop.propertyItems()
+            [('email', 'david@jcu.edu.au'), ('fullname', 'Unknown (Name not supplied)'), ('location', None)]
+
+
             test missing shibboleth attribute
 
             >>> self.shib.store = {'matthew': {u'HTTP_MAIL': 'matthew.morgan@jcu.edu.au', u'HTTP_REMOTE_USER': 'matthew', u'HTTP_DISPLAYNAME': 'Matthew Morgan'}}
@@ -317,6 +374,10 @@ class ShibbolethHelper(BasePlugin):
         for k, v in self.attr_map.items():
             if userdata.has_key(k):
                 data[v] = userdata[k]
+            elif v == 'fullname':
+                data[v] = userdata.get('HTTP_CN', \
+                                       'Unknown (Name not supplied)')
+
         return UserPropertySheet(self.id, schema=schema, **data)
 
 
@@ -395,7 +456,7 @@ class ShibbolethHelper(BasePlugin):
               'HTTP_UNSCOPED_AFFILIATION' : "staff", }
             >>> request = TestRequest(**shib_headers)
             >>> self.shib._ShibbolethHelper__extract_shib_data(request)
-              ('_9c86b438e92e1de9b378a23f4838a959', \
+              ('B_0-_88s2CiUXmJx-PYW_8TugZI', \
               {u'HTTP_PERSISTENT_ID': 'https://idp.test.org/idp/shibboleth!https://testhost.com/shibboleth!P4o6lbbg41Q=', \
               u'HTTP_SN': 'Sim', \
               u'HTTP_MAIL': 'russell@vpac.org', \
@@ -422,7 +483,7 @@ class ShibbolethHelper(BasePlugin):
               'HTTP_REMOTE_USER': 'russell@vpac.org'}
             >>> request = TestRequest(**shib_headers)
             >>> self.shib._ShibbolethHelper__extract_shib_data(request)
-              ('russell@vpac.org', \
+              ('_9c86b438e92e1de9b378a23f4838a959', \
               {u'HTTP_PERSISTENT_ID': 'https://idp.test.org/idp/shibboleth!https://testhost.com/shibboleth!P4o6lbbg41Q=', \
               u'HTTP_REMOTE_USER': 'russell@vpac.org', \
               u'HTTP_SHIB_APPLICATION_ID': 'default', \
