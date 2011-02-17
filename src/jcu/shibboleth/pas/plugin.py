@@ -157,11 +157,87 @@ class ShibbolethHelper(BasePlugin):
     #
     security.declarePrivate('extractCredentials')
     def resetCredentials(self, request, response):
-        #expire the _shibsession_XXX cookie here
-        #for cookie in request.cookies:
-        #    if 'shibsession' in cookie:
-        #        response.expireCookie(cookie, path='/')
+        """
+            >>> from Products.PluggableAuthService.interfaces.plugins import \
+                    ICredentialsResetPlugin
+            >>> plugins = self.uf.plugins
+            >>> plugins.activatePlugin(ICredentialsResetPlugin, 'shib')
 
+            >>> print self.shib
+
+        Expire the _shibsession_XXX cookie here to enable users to log
+        out correctly.
+        """
+        for cookie in request.cookies:
+            if 'shibsession' in cookie:
+                response.expireCookie(cookie, path='/')
+
+    #
+    #    IDeleteCapability implementation
+    #
+    security.declarePublic('allowDeletePrincipal')
+    def allowDeletePrincipal(self, principal_id):
+        """
+            >>> self.shib.store = {'B_0-_88s2CiUXmJx-PYW_8TugZI': {
+            ...     u'HTTP_SHARED_TOKEN': 'B_0-_88s2CiUXmJx-PYW_8TugZI',
+            ...     u'HTTP_CN': 'David B',
+            ...     u'HTTP_MAIL': 'david@jcu.edu.au',
+            ...     u'HTTP_REMOTE_USER':'david',
+            ...     }
+            ... }
+            >>> self.shib.allowDeletePrincipal('B_0-_88s2CiUXmJx-PYW_8TugZI')
+            1
+
+        True iff this plugin can delete a certain user/group.
+        This is true if this plugin manages the user.
+        """
+        if principal_id in self.store:
+            return 1
+        return 0
+
+    #
+    #   IUserManagement implementation
+    #
+    security.declarePrivate('doChangeUser')
+    def doChangeUser(self, principal_id, password, **kw):
+        """We don't change users.
+        """
+        pass
+
+    security.declarePrivate('doDeleteUser')
+    def doDeleteUser(self, principal_id):
+        """
+            >>> from Products.PluggableAuthService.interfaces.plugins import \
+                    IPropertiesPlugin, IUserEnumerationPlugin
+            >>> from Products.PlonePAS.interfaces.plugins import \
+                    IUserManagement
+            >>> plugins = self.uf.plugins
+            >>> plugins.activatePlugin(IPropertiesPlugin, 'shib')
+            >>> plugins.activatePlugin(IUserEnumerationPlugin, 'shib')
+            >>> plugins.activatePlugin(IUserManagement, 'shib')
+
+            >>> self.shib.store = {'B_0-_88s2CiUXmJx-PYW_8TugZI': {
+            ...     u'HTTP_SHARED_TOKEN': 'B_0-_88s2CiUXmJx-PYW_8TugZI',
+            ...     u'HTTP_CN': 'David B',
+            ...     u'HTTP_MAIL': 'david@jcu.edu.au',
+            ...     u'HTTP_REMOTE_USER':'david',
+            ...     }
+            ... }
+            >>> u = self.app.acl_users.getUser('B_0-_88s2CiUXmJx-PYW_8TugZI')
+            >>> print u
+            B_0-_88s2CiUXmJx-PYW_8TugZI
+
+            >>> self.app.acl_users.doDeleteUser('B_0-_88s2CiUXmJx-PYW_8TugZI')
+
+            >>> 'B_0-_88s2CiUXmJx-PYW_8TugZI' in self.shib.store
+
+        Given a Shibboleth ID (shared token, typically), delete that user
+        """
+        if not self.allowDeletePrincipal(principal_id):
+            raise KeyError, 'Invalid user ID: %s' % principal_id
+
+        del self.store[principal_id]
+        return True
 
     #
     #    IExtractionPlugin implementation

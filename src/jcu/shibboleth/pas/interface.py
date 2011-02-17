@@ -8,9 +8,10 @@ from Products.PluggableAuthService.interfaces.plugins import \
         IUserEnumerationPlugin, \
         IPropertiesPlugin, \
         ICredentialsResetPlugin
-
-
-from Products.PlonePAS.interfaces.plugins import IUserIntrospection
+from Products.PlonePAS.interfaces.capabilities import IDeleteCapability
+from Products.PlonePAS.interfaces.plugins import \
+        IUserIntrospection, \
+        IUserManagement
 
 from zope import schema
 from zope.interface import Interface
@@ -25,7 +26,9 @@ class IShibbolethHelper(IAuthenticationPlugin,
         IPropertiesPlugin,
         IExtractionPlugin,
         IUserIntrospection,
-        ICredentialsResetPlugin):
+        ICredentialsResetPlugin,
+        IUserManagement,
+        IDeleteCapability):
     """interface for PasShibboleth
     """
 

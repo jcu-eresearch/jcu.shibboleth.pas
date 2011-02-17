@@ -1,3 +1,15 @@
+1.2-dev (2011-02-17)
+
+ - Unit tests for deletion of users and reset credentials are broken due
+   to lack of time and manner in which unit tests were created (not-Plone
+   specific).
+ - Adding ability to remove users from Shibboleth store
+ - Changing to use shared token by default
+ - Ability to remove shibsession cookies to allow correct logout from
+   portals.
+ - Allowing fallback to CN if displayname attribute isn't present 
+ [David B]
+
 1.2 (2008-4-25)
  - Added support for shibboleth 2
 
